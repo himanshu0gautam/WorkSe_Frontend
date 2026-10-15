@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Search,
   MapPin,
@@ -19,6 +19,7 @@ import {
   Clock,
   ChevronRight
 } from 'lucide-react';
+import { jobService } from '../api/jobService'
 
 const TRADE_CATEGORIES = [
   { id: 'plumber', label: 'Plumber (प्लंबर)', icon: Wrench, active: true },
@@ -28,12 +29,22 @@ const TRADE_CATEGORIES = [
   { id: 'cleaner', label: 'Cleaner (सफाई)', icon: Sparkles, active: false },
 ];
 
+// const CATEGORY_ICONS = {
+//   plumber: Wrench,
+//   electrician: Zap,
+//   carpenter: Hammer,
+//   painter: Paintbrush,
+//   cleaner: Sparkles,
+//   mechanic: Wrench,
+//   mason: Hammer,
+// };
+
 const JOB_LISTINGS = [
   {
     id: 1,
     category: 'PLUMBING WORK • प्लंबर',
-    categoryIcon: Wrench,
-    categoryColor: 'text-amber-600 bg-amber-50 border-amber-200',
+    // categoryIcon: Wrench,
+    // categoryColor: 'text-pink-600 bg-amber-50 border-amber-200',
     postedTime: 'Posted 10 mins ago',
     title: 'Kitchen Tap Leakage & Basin Pipe Change',
     location: 'Bellandur, Green Glen Layout',
@@ -169,11 +180,10 @@ const SearchAndFilters = () => {
               <button
                 key={trade.id}
                 onClick={() => setSelectedTrade(trade.id)}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 border ${
-                  isSelected
-                    ? 'bg-[#0B132B] text-white border-[#0B132B] shadow-xs'
-                    : 'bg-slate-50 text-slate-700 border-slate-200/80 hover:bg-slate-100'
-                }`}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 border ${isSelected
+                  ? 'bg-[#0B132B] text-white border-[#0B132B] shadow-xs'
+                  : 'bg-slate-50 text-slate-700 border-slate-200/80 hover:bg-slate-100'
+                  }`}
               >
                 <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-amber-400' : 'text-slate-500'}`} />
                 <span>{trade.label}</span>
@@ -190,11 +200,10 @@ const SearchAndFilters = () => {
               <button
                 key={dist}
                 onClick={() => setSelectedDistance(dist)}
-                className={`px-3 py-1 rounded-lg font-semibold transition-all ${
-                  selectedDistance === dist
-                    ? 'bg-[#0B132B] text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
+                className={`px-3 py-1 rounded-lg font-semibold transition-all ${selectedDistance === dist
+                  ? 'bg-[#0B132B] text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+                  }`}
               >
                 {dist}
               </button>
@@ -256,9 +265,8 @@ const VoiceNotePlayer = ({ duration, transcript }) => {
         {[40, 75, 30, 90, 60, 100, 45, 80, 35, 65, 90, 40].map((height, i) => (
           <span
             key={i}
-            className={`w-1 rounded-full transition-all duration-300 ${
-              isPlaying ? 'bg-amber-600 animate-pulse' : 'bg-amber-300'
-            }`}
+            className={`w-1 rounded-full transition-all duration-300 ${isPlaying ? 'bg-amber-600 animate-pulse' : 'bg-amber-300'
+              }`}
             style={{ height: `${isPlaying ? Math.max(20, (height + (i % 3) * 20) % 100) : height}%` }}
           />
         ))}
@@ -269,7 +277,7 @@ const VoiceNotePlayer = ({ duration, transcript }) => {
 
 const JobCard = ({ job }) => {
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const CategoryIcon = job.categoryIcon;
+  // const CategoryIcon = CATEGORY_ICONS[job.category?.toLowerCase()] || Wrench;
 
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-md transition-all duration-200">
@@ -277,7 +285,7 @@ const JobCard = ({ job }) => {
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200/60">
-            <CategoryIcon className="w-3.5 h-3.5 text-amber-600" />
+            {/* <CategoryIcon className="w-3.5 h-3.5 text-amber-600" /> */}
             <span>{job.category}</span>
           </div>
           <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
@@ -289,11 +297,10 @@ const JobCard = ({ job }) => {
         {/* Bookmark Button */}
         <button
           onClick={() => setIsBookmarked(!isBookmarked)}
-          className={`p-1.5 rounded-lg border transition-all ${
-            isBookmarked
-              ? 'bg-amber-50 border-amber-300 text-amber-600'
-              : 'bg-slate-50 border-slate-200/80 text-slate-400 hover:text-slate-600'
-          }`}
+          className={`p-1.5 rounded-lg border transition-all ${isBookmarked
+            ? 'bg-amber-50 border-amber-300 text-amber-600'
+            : 'bg-slate-50 border-slate-200/80 text-slate-400 hover:text-slate-600'
+            }`}
           aria-label="Bookmark job"
         >
           <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-amber-500' : ''}`} />
@@ -304,14 +311,17 @@ const JobCard = ({ job }) => {
       <div className="mt-3 flex flex-col md:flex-row md:items-start justify-between gap-3">
         {/* Title and Location */}
         <div className="flex-1">
-          <h3 className="text-base sm:text-lg font-bold text-[#0B132B] leading-snug">
-            {job.title}
-          </h3>
+          <div className="flex flex-col">
+            <h3 className="text-base sm:text-lg font-bold text-[#0B132B] leading-snug capitalize">
+              {job.worktitle}
+            </h3>
+              <span className='text-sm text-slate-700'>{job.workDescription}</span>
+          </div>
 
           <div className="mt-1.5 flex items-center gap-2 flex-wrap text-xs text-slate-600">
             <span className="flex items-center font-medium text-slate-700">
               <MapPin className="w-3.5 h-3.5 text-slate-400 mr-1 flex-shrink-0" />
-              {job.location}
+              {job.address}
             </span>
             <span className="bg-slate-100 border border-slate-200/70 text-slate-700 font-semibold text-[11px] px-2 py-0.5 rounded-md">
               {job.distance}
@@ -328,10 +338,10 @@ const JobCard = ({ job }) => {
         {/* Payout Box */}
         <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 sm:px-4 sm:py-2.5 text-right flex-shrink-0 self-start">
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-            {job.payoutType}
+            {job.preferredDay}
           </span>
           <span className="text-base sm:text-lg font-black text-[#0B132B] block mt-0.5">
-            {job.payoutAmount}
+            {job.preferredTimeSlot}
           </span>
         </div>
       </div>
@@ -347,7 +357,7 @@ const JobCard = ({ job }) => {
         {/* View Photos Button */}
         <button className="w-full py-2.5 px-3 rounded-xl bg-white border border-slate-300 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-slate-50 hover:border-slate-400 transition-all active:scale-[0.98]">
           <Image className="w-4 h-4 text-amber-600" />
-          <span>फोटो देखें ({job.photosCount}) / View Photos</span>
+          <span>फोटो देखें ({job.images.length}) / View Photos</span>
         </button>
 
         {/* WhatsApp Chat Button */}
@@ -367,6 +377,28 @@ const JobCard = ({ job }) => {
 };
 
 export default function FindJob() {
+
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const data = await jobService.getAllJobs({ limit: 10 })
+        setJobs(data.jobs)
+      } catch (error) {
+        console.error("Failed to load jobs:", error.response?.data?.message || error.message);
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchJobs()
+  }, [])
+
+  if (loading) return <p className="p-4">Loading verified jobs...</p>;
+
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-800 antialiased font-sans pb-16">
       {/* Top Title Section */}
@@ -388,8 +420,8 @@ export default function FindJob() {
 
       {/* Job Cards Stack */}
       <main className="max-w-5xl mx-auto px-4 space-y-4">
-        {JOB_LISTINGS.map((job) => (
-          <JobCard key={job.id} job={job} />
+        {jobs.map((job) => (
+          <JobCard key={job._id || job.id} job={job} />
         ))}
       </main>
     </div>

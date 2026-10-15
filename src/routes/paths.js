@@ -4,6 +4,7 @@
 export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
+  REGISTERWORKER: '/register-worker',
   FINDWORKER: '/findworker',
   FINDJOB: '/findwork',
   DASHBOARD: '/dashboard',

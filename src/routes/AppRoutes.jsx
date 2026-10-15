@@ -4,6 +4,8 @@ import { MainLayout } from '@/layouts/MainLayout';
 import { ProtectedRoute } from './ProtectedRoute';
 import { LazyFallback } from './LazyFallback';
 import { ROUTES } from './paths';
+import Login from '../pages/auth/user/page/Login';
+import RegisterWorker from '../pages/auth/worker/pages/RegisterWorker';
 
 // Code Splitting & Dynamic Imports via React.lazy
 // const userDashbord = lazy(() => import('../pages/dashboard/user'));
@@ -25,6 +27,8 @@ export function AppRoutes() {
           <Route path={ROUTES.POST_WORK} element={<AddNewWork />} />
           <Route path={ROUTES.NOT_FOUND} element={<NotFoundPage />} />
         </Route>
+          <Route path={ROUTES.LOGIN} element={<Login />} />
+          <Route path={ROUTES.REGISTERWORKER} element={<RegisterWorker />} />
       </Routes>
     </Suspense>
   );

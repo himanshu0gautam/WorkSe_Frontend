@@ -12,11 +12,11 @@ export default function NotFoundPage() {
       <h1 className="text-4xl font-extrabold text-white tracking-tight">404</h1>
       <p className="text-slate-400 mt-2 max-w-sm">The route you are trying to access does not exist or has moved.</p>
       <Link
-        to={ROUTES.DASHBOARD}
+        to={ROUTES.HOME}
         className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition-all"
       >
         <Home className="w-4 h-4" />
-        Return to Dashboard
+        Return to Home
       </Link>
     </div>
   );

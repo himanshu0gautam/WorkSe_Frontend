@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom';
+import { Link, Links } from 'react-router-dom';
 import {
   Globe,
   // Menu,
@@ -53,16 +53,20 @@ const Navbar = () => {
                 </span>
               </span>
             </button>
-            <button className="flex min-h-12 items-center gap-2 rounded-xl border-2 border-[#202B4C] px-4 text-sm font-bold transition hover:bg-slate-50">
-              <span className="text-[#D99416]"><Handshake className="h-5 w-5" /></span>
-              Register as Karigar
-            </button>
+            <Link to="/register-worker">
+              <button className="flex min-h-12 items-center gap-2 rounded-xl border-2 border-[#202B4C] px-4 text-sm font-bold transition hover:bg-slate-50">
+                <span className="text-[#D99416]"><Handshake className="h-5 w-5" /></span>
+                Register as Karigar
+              </button>
+            </Link>
             {/* <button className="flex min-h-12 items-center gap-2 rounded-xl bg-[#202B4C] px-5 text-sm font-bold text-white shadow-md transition hover:bg-[#2d3b63]">
               Login
             </button> */}
-            <button className="flex min-h-12 items-center gap-2 rounded-xl bg-[#202B4C] px-5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(11,19,43,0.6)] transition-all duration-200 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_rgba(11,19,43,0.9)] active:translate-x-0 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(11,19,43,0.6)]">
-              Login
-            </button>
+            <Link to="/login">
+              <button className="flex min-h-12 items-center gap-2 rounded-xl bg-[#202B4C] px-5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(11,19,43,0.6)] transition-all duration-200 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_rgba(11,19,43,0.9)] active:translate-x-0 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(11,19,43,0.6)]">
+                Login
+              </button>
+            </Link>
           </div>
 
           <button

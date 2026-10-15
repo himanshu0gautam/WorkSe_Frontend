@@ -14,19 +14,11 @@ import {
   Paintbrush,
   Sparkles,
   Tv,
-  Grid,
   CheckCircle2,
   XCircle,
-  HelpCircle,
-  ChevronDown,
-  Globe,
-  Award,
   ArrowRight,
   UserCheck,
   Building,
-  Menu,
-  X,
-  Heart
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
