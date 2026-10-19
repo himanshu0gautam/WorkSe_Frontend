@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import {
   Search,
   BriefcaseBusiness,
@@ -20,7 +20,7 @@ import {
   UserCheck,
   Building,
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
 
 // --- CATEGORIES DATA ---
@@ -630,7 +630,7 @@ const VerifiedWorkers = () => {
 
 const Testimonials = () => {
   return (
-    <section className="py-14 bg-[#F8F9FA] border-t border-slate-200">
+    <section id="realStories" className="scroll-mt-32 py-14 bg-[#F8F9FA] border-t border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="text-xs font-bold text-[#D4A373] uppercase tracking-wider">Real Stories</span>
@@ -779,6 +779,14 @@ const Testimonials = () => {
 // };
 
 export default function Hero() {
+  const { hash } = useLocation();
+
+  useEffect(() => {
+    if (hash === '#realStories') {
+      document.getElementById('realStories')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [hash]);
+
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-slate-800 font-sans antialiased selection:bg-[#D4A373] selection:text-[#0B132B]">
 

@@ -10,7 +10,8 @@ export const ROUTES = {
   DASHBOARD: '/dashboard',
   CHAT: '/chat',
   ADD_WORK: '/add-work',
-  POST_WORK: '/post-work',
+  HOW_IT_WORK: '/how-it-work',
+  OUR_VISION: '/our-vision',
   NOT_FOUND: '*',
 };
 

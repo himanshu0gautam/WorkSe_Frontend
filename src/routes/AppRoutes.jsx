@@ -6,6 +6,8 @@ import { LazyFallback } from './LazyFallback';
 import { ROUTES } from './paths';
 import Login from '../pages/auth/user/page/Login';
 import RegisterWorker from '../pages/auth/worker/pages/RegisterWorker';
+import HowItWorks from '../views/HowItWorks';
+import OurVision from '../views/OurVision';
 
 // Code Splitting & Dynamic Imports via React.lazy
 // const userDashbord = lazy(() => import('../pages/dashboard/user'));
@@ -24,8 +26,9 @@ export function AppRoutes() {
           <Route path={ROUTES.FINDWORKER} element={<FindWorker />} />
           <Route path={ROUTES.FINDJOB} element={<FindJob />} />
           <Route path={ROUTES.ADD_WORK} element={<AddNewWork />} />
-          <Route path={ROUTES.POST_WORK} element={<AddNewWork />} />
           <Route path={ROUTES.NOT_FOUND} element={<NotFoundPage />} />
+          <Route path={ROUTES.HOW_IT_WORK} element={<HowItWorks />} />
+          <Route path={ROUTES.OUR_VISION} element={<OurVision />} />
         </Route>
           <Route path={ROUTES.LOGIN} element={<Login />} />
           <Route path={ROUTES.REGISTERWORKER} element={<RegisterWorker />} />

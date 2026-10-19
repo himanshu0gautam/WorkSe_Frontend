@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Link, Links } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { ROUTES } from '@/routes/paths';
 import {
   Globe,
   // Menu,
@@ -83,11 +84,15 @@ const Navbar = () => {
         <div className="hidden border-y border-slate-200 bg-slate-50 lg:block">
           <div className="mx-auto flex min-h-[52px] max-w-[1440px] items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
             <nav className="flex h-full min-w-0 items-center gap-7 text-sm font-semibold pl-8">
-              <a href="#workers" className="flex h-[52px] items-center gap-2 text-slate-600 transition hover:text-[#202B4C]">
+              <Link to="/how-it-work">
+              <div className="flex h-[52px] items-center gap-2 text-slate-600 transition hover:text-[#202B4C]">
                 How it Work
-              </a>
-              <a href="#deals" className="whitespace-nowrap text-slate-600 transition hover:text-[#202B4C]">Our Vision</a>
-              <a href="#trades" className="flex whitespace-nowrap items-center gap-2 text-slate-600 transition hover:text-[#202B4C]">Real Stories</a>
+              </div>
+              </Link>
+              <Link to="/our-vision"> 
+              <div className="whitespace-nowrap text-slate-600 transition hover:text-[#202B4C]">Our Vision</div>
+              </Link>
+              <Link to={`${ROUTES.HOME}#realStories`} className="flex whitespace-nowrap items-center gap-2 text-slate-600 transition hover:text-[#202B4C]">Real Stories</Link>
               <Link to="/add-work" className="whitespace-nowrap text-slate-600 transition hover:text-[#202B4C] border-b border-transparent hover:border-[#D99416]">Add New Work</Link>
             </nav>
             <div className="flex shrink-0 items-center gap-5 text-xs font-medium text-slate-600">
@@ -122,6 +127,13 @@ const Navbar = () => {
                 <BadgeCheck className="h-5 w-5 text-[#D99416]" /> Verified Karigars
               </a>
               <a href="#trades" onClick={() => setMobileMenuOpen(false)} className="block py-3 font-medium text-slate-600">Popular Trades</a>
+              <Link
+                to={`${ROUTES.HOME}#realStories`}
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-3 font-medium text-slate-600"
+              >
+                Real Stories
+              </Link>
               <a href="#help" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 py-3 font-medium text-slate-600">
                 <Headset className="h-5 w-5 text-[#D99416]" /> Helpline: 1800-BULAO-MISTRI
               </a>
@@ -146,7 +158,6 @@ const Navbar = () => {
 }
 
 export default Navbar
-
 
 
 
