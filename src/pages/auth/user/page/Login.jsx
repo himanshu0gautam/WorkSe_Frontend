@@ -7,17 +7,28 @@ import {
     ArrowRight,
     Wrench
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { loginService } from '../api/loginService';
 
 export default function Login() {
-    const [timer, setTimer] = useState(45);
-    const [fullName, setFullName] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
+
+    const navigate = useNavigate()
+
+    // form state
+    const [username, setUsername] = useState('');
+    const [phone, setPhone] = useState('');
     const [otp, setOtp] = useState(['', '', '', '']);
+
+    // timer and ui
     const [phoneError, setPhoneError] = useState("")
     const [activeIdx, setActiveIdx] = useState(null)
+    const [timer, setTimer] = useState(0);
+    const [isSendingOtp, setIsSendingOtp] = useState(false);
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [apiError, setApiError] = useState("");
 
     const inputRefs = useRef([])
+    const timerIntervalRef = useRef(null)
 
     //phone validation
     const handlePhoneChange = (e) => {
@@ -27,12 +38,12 @@ export default function Login() {
         if (/[^0-9]/.test(rawValue)) {
             setPhoneError("Only numbers are allowed (no letters/symbols)");
         } else {
-            setPhoneError("");
+            setPhoneError("something went wrong");
         }
 
         // 2. Sirf numbers ko extract karke state mein save karein (Max 10 digits)
         const numericValue = rawValue.replace(/\D/g, "").slice(0, 10);
-        setPhoneNumber(numericValue);
+        setPhone(numericValue);
     };
 
     //otp validation
@@ -58,22 +69,91 @@ export default function Login() {
 
     // OnBlur par empty check karne ke liye:
     const handlePhoneBlur = () => {
-        if (!phoneNumber) {
+        if (!phone) {
             setPhoneError("Phone number cannot be empty");
         }
     };
 
+    // api
+    const loginSubmit = async (e) => {
+        e.preventDefault()
+        setApiError("")
 
-    // Countdown timer effect for OTP resend
-    useEffect(() => {
-        let interval = null;
-        if (timer > 0) {
-            interval = setInterval(() => {
-                setTimer((prev) => prev - 1);
-            }, 1000);
+        if (!username.trim()) {
+            setApiError("Please enter your name")
+            return
         }
-        return () => clearInterval(interval);
-    }, [timer]);
+        if (!phone || phone.length !== 10) {
+            setPhoneError("Please enter a valid 10-digit mobile number")
+            return
+        }
+        try {
+            setIsSendingOtp(true)
+
+            const payload = {
+                username: username.trim(),
+                phone: phone
+            }
+
+            const data = await loginService.SendOtp(payload)
+             if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current)
+            }
+            let remainingTime = 45
+            setTimer(remainingTime)
+            timerIntervalRef.current = setInterval(() => {
+                remainingTime -= 1
+                setTimer(remainingTime)
+                if (remainingTime === 0) {
+                    clearInterval(timerIntervalRef.current)
+                    timerIntervalRef.current = null
+                }
+            }, 1000)
+            console.log("otp send", data);
+
+        } catch (error) {
+            console.error("Error sending OTP:", error);
+            setApiError(
+                err.response?.data?.message || "Failed to send OTP. Please try again."
+            );
+        } finally {
+            setIsSendingOtp(false)
+        }
+    }
+
+    const verfiyAndLogin = async () => {
+        setApiError("")
+
+        const fullOtp = otp.join("")
+
+        if (fullOtp.length !== 4) {
+            setApiError("Please enter complete 4-digit OTP..")
+            return
+        }
+
+        try {
+            setIsVerifying(true)
+
+            const payload = {
+                phone: phone,
+                otp: fullOtp,
+                username: username
+            }
+
+            const res = await loginService.verifyOtp(payload)
+
+            navigate("/")
+
+            console.log("login success data", res);
+
+        } catch (error) {
+            setApiError(
+                error.response?.data?.message || "Invalid OTP. Please try again."
+            );
+        } finally {
+            setIsVerifying(false)
+        }
+    }
 
     return (
         <div className="min-h-screen bg-[#f1f5f9] flex items-center justify-center p-4 font-sans antialiased">
@@ -104,7 +184,11 @@ export default function Login() {
                         </h1>
                     </div>
                 </div>
-
+                {apiError && (
+                    <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-200">
+                        {apiError}
+                    </div>
+                )}
                 {/* Divider */}
                 <div className="w-full h-[1px] bg-[#f1f5f9] my-4"></div>
 
@@ -122,8 +206,8 @@ export default function Login() {
                             </span>
                             <input
                                 type="text"
-                                value={fullName}
-                                onChange={(e) => setFullName(e.target.value)}
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
                                 placeholder="e.g. Rahul Sharma"
                                 className="w-full pl-10 pr-4 py-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-sm text-[#1e293b] placeholder-slate-400 focus:outline-none focus:border-[#d97706] focus:bg-white transition-all"
                             />
@@ -145,7 +229,7 @@ export default function Login() {
                             <div className="relative flex-1 flex items-center bg-[#f8fafc] border border-[#e2e8f0] rounded-xl overflow-hidden focus-within:border-[#d97706] focus-within:bg-white transition-all">
                                 <input
                                     type="text"
-                                    value={phoneNumber}
+                                    value={phone}
                                     inputMode='numeric'
                                     maxLength={10}
                                     placeholder="e.g. 9891000000"
@@ -155,10 +239,12 @@ export default function Login() {
                                 />
                                 <button
                                     type="button"
-                                    onClick={() => setTimer(45)}
+                                    onClick={loginSubmit}
+                                    disabled={isSendingOtp || timer > 0}
                                     className="mr-1.5 px-6 py-1.5 border border-[#fbbf24] bg-[#fffbeb] text-[#d97706] hover:bg-[#fef3c7] font-semibold text-xs rounded-lg transition-colors flex flex-col items-center justify-center leading-tight shrink-0"
                                 >
-                                    <span>Get</span>
+                                    <span>{isSendingOtp ? "..." : "Get"}</span>
+                                    {/* <span>Get</span> */}
                                     <span className="text-[10px] font-medium">OTP</span>
                                 </button>
                             </div>
@@ -173,7 +259,12 @@ export default function Login() {
                             </label>
                             <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
                                 <Clock className="w-3.5 h-3.5 text-slate-400" />
-                                <span>Resend in 0:{timer < 10 ? `0${timer}` : timer}s</span>
+                                {/* <span>Resend in 0:{timer < 10 ? `0${timer}` : timer}s</span> */}
+                                <span>
+                                    {timer > 0
+                                        ? `Resend in 0:${timer < 10 ? `0${timer}` : timer}s`
+                                        : "Ready to Send"}
+                                </span>
                             </div>
                         </div>
                         <p className="text-[11px] text-slate-400 mb-3">
@@ -211,12 +302,15 @@ export default function Login() {
 
                 {/* Main Action Button */}
                 <button
-                    onClick={() => { }}
+                type='button'
+                    onClick={verfiyAndLogin}
+                    disabled={isVerifying}
                     className="w-full mt-6 py-3.5 px-6 bg-[#1e293b] hover:bg-[#0f172a] text-white rounded-xl font-medium text-sm flex items-center justify-between shadow-md transition-all group"
                 >
                     <span></span>
                     <span className="flex items-center gap-2">
-                        Verify & Login <span className="font-normal text-slate-300 text-xs">(सत्यापित करें और आगे बढ़ें)</span>
+                        {isVerifying ? "verifying..." : "verify & Login"}{""}
+                        <span className="font-normal text-slate-300 text-xs">(सत्यापित करें और आगे बढ़ें)</span>
                     </span>
                     <div className="w-7 h-7 rounded-full bg-[#f59e0b] flex items-center justify-center text-[#1e293b] group-hover:translate-x-0.5 transition-transform">
                         <ArrowRight className="w-4 h-4 stroke-[2.5]" />

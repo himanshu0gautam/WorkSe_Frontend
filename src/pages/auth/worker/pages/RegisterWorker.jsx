@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
-import { IdCard,Wrench, MapPinPlus  } from 'lucide-react'
+import React, { useState, } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { IdCard, Wrench, MapPinPlus } from 'lucide-react'
+import { workerService } from '../api/workerService';
 
 export default function RegisterWorker() {
+
+    const navigate = useNavigate()
+
     // Multi-step navigation state
     const [currentStep, setCurrentStep] = useState(1);
 
     // Step 1: Personal Details State
-    const [fullName, setFullName] = useState("");
+    const [fullname, setFullName] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
     const [whatsappNumber, setWhatsappNumber] = useState("");
     const [sameWhatsapp, setSameWhatsapp] = useState(true);
@@ -35,7 +40,7 @@ export default function RegisterWorker() {
     ]);
     const [newSkillInput, setNewSkillInput] = useState("");
     const [karigarBio, setKarigarBio] = useState("10 years of reliable local service. Polite behavior, own professional tooling set, and genuine spare part guidance guaranteed.");
-    const [profileImage, setProfileImage] = useState(null);
+    const [image, setImage] = useState(null);
 
     // Error state for validation feedback
     const [errors, setErrors] = useState({});
@@ -44,7 +49,7 @@ export default function RegisterWorker() {
     const validateStep = (step) => {
         let newErrors = {};
         if (step === 1) {
-            if (!fullName.trim()) newErrors.fullName = "Full Name is required";
+            if (!fullname.trim()) newErrors.fullName = "Full Name is required";
             if (!phoneNumber || phoneNumber.length !== 10) newErrors.phoneNumber = "Valid 10-digit phone number is required";
             if (!experience) newErrors.experience = "Experience is required";
         } else if (step === 2) {
@@ -55,6 +60,8 @@ export default function RegisterWorker() {
             if (!state) newErrors.state = "State is required";
             if (!city) newErrors.city = "City is required";
             if (!pincode || pincode.length !== 6) newErrors.pincode = "Valid 6-digit pincode is required";
+        } else if (step === 4 && !image) {
+            newErrors.image = "Profile photo is required";
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -96,32 +103,54 @@ export default function RegisterWorker() {
         e.preventDefault();
         if (!validateStep(4)) return;
 
-        const formData = {
-            fullName,
-            phoneNumber,
-            whatsappNumber: sameWhatsapp ? phoneNumber : whatsappNumber,
-            experience,
-            age,
-            dob,
-            tradeCategory,
-            headlineTitle,
-            workDescription,
-            address,
-            state,
-            city,
-            pincode,
-            serviceRadius,
-            skills,
-            karigarBio,
-            profileImage
-        };
+        // const formData = {
+        //     fullName,
+        //     phoneNumber,
+        //     whatsappNumber: sameWhatsapp ? phoneNumber : whatsappNumber,
+        //     experience,
+        //     age,
+        //     dob,
+        //     tradeCategory,
+        //     headlineTitle,
+        //     workDescription,
+        //     address,
+        //     state,
+        //     city,
+        //     pincode,
+        //     serviceRadius,
+        //     skills,
+        //     karigarBio,
+        //     image
+        // };
+        const form = new FormData();
+        form.append("fullname", fullname);
+        form.append("phone", phoneNumber);
+        form.append("whattappNo", sameWhatsapp ? phoneNumber : whatsappNumber);
+        form.append("experience", experience);
+        form.append("age", age);
+        form.append("dob", dob);
+        form.append("tradeCategory", tradeCategory);
+        form.append("jobTitle", headlineTitle);
+        form.append("jobDetails", workDescription);
+        form.append("address", address);
+        form.append("state", state);
+        form.append("city", city);
+        form.append("pincode", pincode);
+        form.append("serviceRadius", serviceRadius);
+        form.append("bio", karigarBio);
+        form.append("skill", skills.join(", "));
+        if (image) {
+            form.append("image", image);
+        }
 
         try {
-            console.log("Submitting Karigar Data to Backend API:", formData);
-            // TODO: Replace with your actual backend server API endpoint call (e.g., axios.post('/api/v1/worker/register', formData))
+            // console.log("Submitting Karigar Data to Backend API:", formData);
+            const res = await workerService.createWorker(form)
+            navigate("/")
             alert("Karigar Registration Successful!");
         } catch (error) {
-            console.error("Registration error:", error);
+            console.error("Registration error:", error.response?.data || error.message);
+            alert(error.response?.data?.message || "Registration failed!");
         }
     };
 
@@ -242,7 +271,7 @@ export default function RegisterWorker() {
                                             <input
                                                 type="text"
                                                 id="fullName"
-                                                value={fullName}
+                                                value={fullname}
                                                 onChange={(e) => setFullName(e.target.value)}
                                                 placeholder="e.g. Rameshwar Mistri"
                                                 className="w-full h-11 px-3.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 text-sm focus:border-amber-600 focus:ring-1 focus:ring-amber-600 outline-none transition-colors"
@@ -261,13 +290,13 @@ export default function RegisterWorker() {
                                             </label>
                                             <div className=" flex rounded-lg overflow-hidden border border-slate-300 focus-within:border-amber-600 focus-within:ring-1 focus-within:ring-amber-600">
                                                 <span className="inline-flex items-center px-4 bg-slate-100 text-slate-800 text-sm font-semibold border-r border-slate-300 select-none">
-                                                 +91
+                                                    +91
                                                 </span>
                                                 <input
                                                     type="tel"
                                                     id="phoneNumber"
                                                     maxLength="10"
-                                                      value={phoneNumber}
+                                                    value={phoneNumber}
                                                     onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
                                                     placeholder="9876543210"
                                                     className="w-full h-11 px-3 bg-slate-50 text-slate-900 text-sm border-none outline-none"
@@ -310,7 +339,7 @@ export default function RegisterWorker() {
                                         <div className="">
                                             <input
                                                 type="tel"
-                                                  value={sameWhatsapp ? phoneNumber : whatsappNumber}
+                                                value={sameWhatsapp ? phoneNumber : whatsappNumber}
                                                 onChange={(e) => setWhatsappNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
                                                 readOnly={sameWhatsapp}
                                                 placeholder="WhatsApp mobile number"
@@ -592,12 +621,13 @@ export default function RegisterWorker() {
                                             <input
                                                 type="file"
                                                 accept="image/*"
-                                                onChange={(e) => setProfileImage(e.target.files[0])}
+                                                onChange={(e) => setImage(e.target.files[0])}
                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                             />
                                             <span className="material-symbols-outlined text-3xl text-slate-400 mb-1">cloud_upload</span>
-                                            <p className="text-xs font-semibold text-slate-700">{profileImage ? profileImage.name : "Click to upload or drag & drop profile image (.png, .jpg)"}</p>
+                                            <p className="text-xs font-semibold text-slate-700">{image ? image.name : "Click to upload or drag & drop profile image (.png, .jpg)"}</p>
                                         </div>
+                                        {errors.image && <p className="text-red-500 text-xs mt-1">{errors.image}</p>}
                                     </div>
                                 </div>
                             )}
