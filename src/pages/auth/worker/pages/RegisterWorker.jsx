@@ -2,10 +2,13 @@ import React, { useState, } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IdCard, Wrench, MapPinPlus } from 'lucide-react'
 import { workerService } from '../api/workerService';
+import { useDispatch } from 'react-redux';
+import { setLoginData } from '../../../../redux/authSlice';
 
 export default function RegisterWorker() {
 
     const navigate = useNavigate()
+    const dispatch = useDispatch()
 
     // Multi-step navigation state
     const [currentStep, setCurrentStep] = useState(1);
@@ -146,8 +149,23 @@ export default function RegisterWorker() {
         try {
             // console.log("Submitting Karigar Data to Backend API:", formData);
             const res = await workerService.createWorker(form)
-            navigate("/")
+
+            if(res.statusCode === 201 || res.successs){
+                dispatch(
+                    setLoginData({
+                        user: {
+                            id: res.data.id,
+                            username: res.data.user,
+                            phone: res.data.phoneNo,
+                            role: res.data.role,
+                        },
+                        accessToken: res.data.token
+                    })
+                )
+            }
             alert("Karigar Registration Successful!");
+            navigate("/")
+
         } catch (error) {
             console.error("Registration error:", error.response?.data || error.message);
             alert(error.response?.data?.message || "Registration failed!");

@@ -27,10 +27,10 @@ export function AppRoutes() {
           <Route path={ROUTES.FINDJOB} element={<FindJob />} />
           <Route path={ROUTES.ADD_WORK} element={<AddNewWork />} />
           <Route path={ROUTES.NOT_FOUND} element={<NotFoundPage />} />
-          <Route path={ROUTES.HOW_IT_WORK} element={<HowItWorks />} />
-          <Route path={ROUTES.OUR_VISION} element={<OurVision />} />
         </Route>
           <Route path={ROUTES.LOGIN} element={<Login />} />
+          <Route path={ROUTES.OUR_VISION} element={<OurVision />} />
+          <Route path={ROUTES.HOW_IT_WORK} element={<HowItWorks />} />
           <Route path={ROUTES.REGISTERWORKER} element={<RegisterWorker />} />
       </Routes>
     </Suspense>

@@ -9,9 +9,12 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginService } from '../api/loginService';
+import { useDispatch } from 'react-redux'
+import { setLoginData } from '../../../../redux/authSlice';
 
 export default function Login() {
 
+    const dispatch = useDispatch()
     const navigate = useNavigate()
 
     // form state
@@ -96,7 +99,8 @@ export default function Login() {
             }
 
             const data = await loginService.SendOtp(payload)
-             if (timerIntervalRef.current) {
+
+            if (timerIntervalRef.current) {
                 clearInterval(timerIntervalRef.current)
             }
             let remainingTime = 45
@@ -114,7 +118,7 @@ export default function Login() {
         } catch (error) {
             console.error("Error sending OTP:", error);
             setApiError(
-                err.response?.data?.message || "Failed to send OTP. Please try again."
+                error.response?.data?.message || "Failed to send OTP. Please try again."
             );
         } finally {
             setIsSendingOtp(false)
@@ -141,11 +145,22 @@ export default function Login() {
             }
 
             const res = await loginService.verifyOtp(payload)
-
-            navigate("/")
-
-            console.log("login success data", res);
-
+             
+            if(res.success) {
+                dispatch(
+                    setLoginData({
+                        user: {
+                            id: res.data.id,
+                            phone: res.data.phone,
+                            role: res.data.role,
+                            username: username
+                        },
+                        accessToken: res.data.accessToken
+                    })
+                )
+                console.log("login success data", res);
+                navigate("/")
+            }
         } catch (error) {
             setApiError(
                 error.response?.data?.message || "Invalid OTP. Please try again."

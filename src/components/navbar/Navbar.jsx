@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
 import {
@@ -17,12 +17,37 @@ import {
   Plus,
   Search,
   X,
+  LogOut,
+  UserIcon
 } from 'lucide-react';
 import logo from '../../../public/logo2.png'
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '../../redux/authSlice';
 
 const Navbar = () => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const dispatch = useDispatch()
+  const { user, isAuthenticated } = useSelector((state) => state.auth)
+
+  // Bahar (outside) click karne par dropdown close ho jaye
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  const handleLogout = () => {
+    setIsOpen(false);
+    dispatch(logout());
+  };
 
   return (
     <>
@@ -54,20 +79,73 @@ const Navbar = () => {
                 </span>
               </span>
             </button>
-            <Link to="/register-worker">
-              <button className="flex min-h-12 items-center gap-2 rounded-xl border-2 border-[#202B4C] px-4 text-sm font-bold transition hover:bg-slate-50">
-                <span className="text-[#D99416]"><Handshake className="h-5 w-5" /></span>
-                Register as Karigar
-              </button>
-            </Link>
-            {/* <button className="flex min-h-12 items-center gap-2 rounded-xl bg-[#202B4C] px-5 text-sm font-bold text-white shadow-md transition hover:bg-[#2d3b63]">
-              Login
-            </button> */}
-            <Link to="/login">
-              <button className="flex min-h-12 items-center gap-2 rounded-xl bg-[#202B4C] px-5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(11,19,43,0.6)] transition-all duration-200 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_rgba(11,19,43,0.9)] active:translate-x-0 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(11,19,43,0.6)]">
-                Login
-              </button>
-            </Link>
+
+            {/* login & register button with conditional rendreing */}
+
+            <div className="flex items-center gap-4">
+
+              {/* Condition 1 & 2: Karigar button tabhi dikhega jab user logged in na ho YA role 'user' ho */}
+              {(!isAuthenticated || user?.role === 'user') && (
+                <Link to="/register-worker">
+                  <button className="flex min-h-12 items-center gap-2 rounded-xl border-2 border-[#202B4C] px-4 text-sm font-bold transition hover:bg-slate-50">
+                    <span className="text-[#D99416]"><Handshake className="h-5 w-5" /></span>
+                    Register as Karigar
+                  </button>
+                </Link>
+              )}
+
+              {/* Condition 3 & 4: Agar user ya worker logged-in hai toh Name/Dropdown dikhega */}
+              {isAuthenticated && user ? (
+                <div className="relative inline-block text-left" ref={dropdownRef}>
+
+                  {/* Trigger Button */}
+                  <div
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="flex min-h-12 items-center gap-2 rounded-full border-2 border-[#202B4C] px-4 text-sm font-bold transition hover:bg-slate-50 cursor-pointer select-none"
+                  >
+                    <span className="text-[1rem] font-semibold capitalize text-slate-700 flex items-center gap-1.5">
+                      <UserIcon className="w-4 h-4 text-[#202B4C]" />
+                      <ChevronDown className={`w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                    </span>
+                  </div>
+
+                  {/* Dropdown Menu Box */}
+                  {isOpen && (
+                    <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-2xl bg-white border border-slate-200 shadow-xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+
+                      <div className="px-4 py-2 border-b border-slate-100 mb-1 flex justify-between items-center">
+                        <p className="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
+                          <UserIcon className='w-4' />
+                          <span className="text-[14px] font-bold text-slate-800 truncate capitalize ml-0.5">
+                            {user?.username || 'User'}
+                          </span>
+                        </p>
+                        {/* Optional: Role dikhane ke liye */}
+                        <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wide mt-0.5 border px-1.5 rounded-lg border-slate-300">
+                          {user?.role || 'user'}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors text-left hover:rounded-xl"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Logout (लॉग आउट)</span>
+                      </button>
+
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Jab koi bhi logged in nahi hai, tab Login button dikhega
+                <Link to="/login">
+                  <button className="flex min-h-12 items-center gap-2 rounded-xl bg-[#202B4C] px-5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(11,19,43,0.6)] transition-all duration-200 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_rgba(11,19,43,0.9)] active:translate-x-0 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(11,19,43,0.6)]">
+                    Login
+                  </button>
+                </Link>
+              )}
+            </div>
           </div>
 
           <button
@@ -85,12 +163,12 @@ const Navbar = () => {
           <div className="mx-auto flex min-h-[52px] max-w-[1440px] items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
             <nav className="flex h-full min-w-0 items-center gap-7 text-sm font-semibold pl-8">
               <Link to="/how-it-work">
-              <div className="flex h-[52px] items-center gap-2 text-slate-600 transition hover:text-[#202B4C]">
-                How it Work
-              </div>
+                <div className="flex h-[52px] items-center gap-2 text-slate-600 transition hover:text-[#202B4C]">
+                  How it Work
+                </div>
               </Link>
-              <Link to="/our-vision"> 
-              <div className="whitespace-nowrap text-slate-600 transition hover:text-[#202B4C]">Our Vision</div>
+              <Link to="/our-vision">
+                <div className="whitespace-nowrap text-slate-600 transition hover:text-[#202B4C]">Our Vision</div>
               </Link>
               <Link to={`${ROUTES.HOME}#realStories`} className="flex whitespace-nowrap items-center gap-2 text-slate-600 transition hover:text-[#202B4C]">Real Stories</Link>
               <Link to="/add-work" className="whitespace-nowrap text-slate-600 transition hover:text-[#202B4C] border-b border-transparent hover:border-[#D99416]">Add New Work</Link>
