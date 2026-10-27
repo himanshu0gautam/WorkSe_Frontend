@@ -1,5 +1,6 @@
 import React, { useEffect, useState, lazy, Suspense } from 'react';
 import {
+  ChevronsRight,
   Search,
   BriefcaseBusiness,
   MapPin,
@@ -18,10 +19,12 @@ import {
   XCircle,
   ArrowRight,
   UserCheck,
+  BadgeCheck,
   Building,
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
+import { heroService } from '../api/heroService';
 
 // --- CATEGORIES DATA ---
 const TRADE_CATEGORIES = [
@@ -104,62 +107,6 @@ const TRADE_CATEGORIES = [
     jobs: '44',
     popular: true,
     badge: 'Direct Deal'
-  }
-];
-
-// --- VERIFIED WORKERS DATA ---
-const VERIFIED_WORKERS = [
-  {
-    id: 1,
-    name: 'Rajesh Kumar',
-    trade: 'Master Electrician',
-    experience: '8+ Yrs Exp.',
-    rating: 4.9,
-    reviewsCount: 142,
-    location: 'Sector 62, Noida',
-    verified: true,
-    badge: 'Top Choice',
-    phone: '+919876543210',
-    avatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?auto=format&fit=crop&q=80&w=250'
-  },
-  {
-    id: 2,
-    name: 'Mukesh Prajapati',
-    trade: 'Plumber & Fitting Spec.',
-    experience: '10+ Yrs Exp.',
-    rating: 4.8,
-    reviewsCount: 198,
-    location: 'Indirapuram, Ghaziabad',
-    verified: true,
-    badge: 'Super Karigar',
-    phone: '+919876543211',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250'
-  },
-  {
-    id: 3,
-    name: 'Ramesh Sharma',
-    trade: 'Furniture & Woodwork',
-    experience: '12+ Yrs Exp.',
-    rating: 4.95,
-    reviewsCount: 230,
-    location: 'Lajpat Nagar, Delhi',
-    verified: true,
-    badge: 'Verified Pro',
-    phone: '+919876543212',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=250'
-  },
-  {
-    id: 4,
-    name: 'Anil Verma',
-    trade: 'AC Tech & Electrician',
-    experience: '6+ Yrs Exp.',
-    rating: 4.75,
-    reviewsCount: 96,
-    location: 'DLF Phase 3, Gurugram',
-    verified: true,
-    badge: 'Quick Respond',
-    phone: '+919876543213',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=250'
   }
 ];
 
@@ -488,6 +435,24 @@ const ZeroBrokerDifference = () => {
 };
 
 const VerifiedWorkers = () => {
+
+  const [workers, setWorkers] = useState([]);
+  
+  const fetchWorker = async (query = "") => {
+    try {
+      const result = await heroService.getNearbyWorker(query)
+      if(result.success){
+        setWorkers(result.data)
+      }
+    } catch (error) {
+      console.error("failed to load nearby worker", error)
+    }
+  }
+
+  useEffect(()=>{
+    fetchWorker()
+  },[])
+
   return (
     <section id="workers" className="py-14 bg-[#F8F9FA] border-t border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -501,32 +466,37 @@ const VerifiedWorkers = () => {
               Background checked, skilled Karigars available for immediate phone or WhatsApp call.
             </p>
           </div>
-          <button className="mt-3 sm:mt-0 text-xs font-bold text-[#0B132B] hover:text-[#D4A373] transition-colors border border-slate-300 px-3 py-1.5 rounded-lg bg-white">
-            Filter by Distance
-          </button>
+          <a
+            href="/findWorker"
+            className="mt-3 sm:mt-0 inline-flex items-center text-xs font-bold text-[#0B132B] hover:text-[#D4A373] transition-colors"
+          >
+             All Worker 
+             {/* ({TRADE_CATEGORIES.length})  */}
+             <ArrowRight className="w-3.5 h-3.5 ml-1" />
+          </a>
         </div>
 
         {/* Worker Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {VERIFIED_WORKERS.map((worker) => (
+          {workers?.map((worker) => (
             <div
-              key={worker.id}
+              key={worker._id}
               className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-xl hover:border-[#D4A373] transition-all duration-300 hover:-translate-y-1"
             >
               {/* Profile Image & Header */}
               <div className="flex items-center space-x-3 mb-3">
                 <img
-                  src={worker.avatar}
-                  alt={worker.name}
+                  src={worker.imageUrl}
+                  alt={worker.fullname}
                   className="w-14 h-14 rounded-full object-cover border-2 border-[#D4A373]"
                 />
                 <div>
-                  <h4 className="font-extrabold text-[#0B132B] text-base leading-snug flex items-center gap-1">
-                    {worker.name}
-                    {worker.verified && <UserCheck className="w-4 h-4 text-[#20BF55]" />}
+                  <h4 className="font-extrabold text-[#0B132B] text-base leading-snug flex items-center gap-1 capitalize">
+                    {worker.fullname}
+                    {worker.isVerfify || true && <BadgeCheck className="w-4 h-4 text-[#20BF55]" />}
                   </h4>
-                  <p className="text-xs font-semibold text-[#D4A373]">{worker.trade}</p>
-                  <span className="text-[10px] text-slate-400">{worker.experience}</span>
+                  <p className="text-xs font-semibold text-[#D4A373]">{worker.tradeCategory}</p>
+                  <span className="text-[10px] text-slate-400">{worker.experience}+ Yrs Exp.</span>
                 </div>
               </div>
 
@@ -535,16 +505,16 @@ const VerifiedWorkers = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center text-amber-500 font-bold">
                     <Star className="w-3.5 h-3.5 fill-amber-400 mr-1" />
-                    <span>{worker.rating}</span>
-                    <span className="text-slate-400 text-[10px] ml-1">({worker.reviewsCount} reviews)</span>
+                    <span>{worker.rating || "4.1"}</span>
+                    <span className="text-slate-400 text-[10px] ml-1">({worker.reviewsCount || 520} reviews)</span>
                   </div>
                   <span className="bg-[#E8F8F5] text-[#20BF55] text-[10px] font-bold px-2 py-0.5 rounded">
-                    {worker.badge}
+                    {worker.badge || "Top Choice"}
                   </span>
                 </div>
                 <div className="flex items-center text-slate-500 text-[11px]">
                   <MapPin className="w-3 h-3 text-slate-400 mr-1 flex-shrink-0" />
-                  <span className="truncate">{worker.location}</span>
+                  <span className="truncate max-w-[120px]">{worker.ExactAddress}</span>
                 </div>
               </div>
 

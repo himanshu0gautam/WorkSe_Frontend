@@ -4,8 +4,9 @@ import { IdCard, Wrench, MapPinPlus } from 'lucide-react'
 import { workerService } from '../api/workerService';
 import { useDispatch } from 'react-redux';
 import { setLoginData } from '../../../../redux/authSlice';
+import { MapPin } from 'lucide-react'
 
-export default function RegisterWorker() {
+export default function RegisterWorker({ onLocationUpdate }) {
 
     const navigate = useNavigate()
     const dispatch = useDispatch()
@@ -63,6 +64,7 @@ export default function RegisterWorker() {
             if (!state) newErrors.state = "State is required";
             if (!city) newErrors.city = "City is required";
             if (!pincode || pincode.length !== 6) newErrors.pincode = "Valid 6-digit pincode is required";
+            if (!workerLocation) newErrors.location = "Detect your current location to continue";
         } else if (step === 4 && !image) {
             newErrors.image = "Profile photo is required";
         }
@@ -101,30 +103,73 @@ export default function RegisterWorker() {
         setSkills(skills.filter(s => s !== skillToRemove));
     };
 
-    // Final Form Submission handler (Connect API endpoint here)
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [displayAddress, setDisplayAddress] = useState('');
+    const [workerLocation, setWorkerLocation] = useState(null);
+
+    // find current location
+    const handleDetectLocation = () => {
+        if (!navigator.geolocation) {
+            setError('Geolocation is not supported by your browser');
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        navigator.geolocation.getCurrentPosition(
+            async ({ coords }) => {
+                const { latitude, longitude } = coords;
+                let formattedAddress = `Location detected (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`;
+
+                try {
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+                    );
+                    if (!response.ok) {
+                        throw new Error(`Reverse geocoding failed with status ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    if (data.display_name) {
+                        formattedAddress = data.display_name;
+                    }
+                } catch (geocodingError) {
+                    console.error('Could not fetch readable address:', geocodingError);
+                }
+
+                setWorkerLocation({ latitude, longitude });
+                setDisplayAddress(formattedAddress);
+                setErrors((currentErrors) => {
+                    const remainingErrors = { ...currentErrors };
+                    delete remainingErrors.location;
+                    return remainingErrors;
+                });
+                setLoading(false);
+            },
+            (geolocationError) => {
+                setLoading(false);
+                setError(geolocationError.message || 'Unable to detect your location');
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+    };
+
+    // api submit
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateStep(4)) return;
 
-        // const formData = {
-        //     fullName,
-        //     phoneNumber,
-        //     whatsappNumber: sameWhatsapp ? phoneNumber : whatsappNumber,
-        //     experience,
-        //     age,
-        //     dob,
-        //     tradeCategory,
-        //     headlineTitle,
-        //     workDescription,
-        //     address,
-        //     state,
-        //     city,
-        //     pincode,
-        //     serviceRadius,
-        //     skills,
-        //     karigarBio,
-        //     image
-        // };
+        if (!workerLocation) {
+            setError('Detect your current location in Step 3 before completing registration.');
+            setCurrentStep(3);
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
         const form = new FormData();
         form.append("fullname", fullname);
         form.append("phone", phoneNumber);
@@ -142,35 +187,38 @@ export default function RegisterWorker() {
         form.append("serviceRadius", serviceRadius);
         form.append("bio", karigarBio);
         form.append("skill", skills.join(", "));
-        if (image) {
-            form.append("image", image);
-        }
+        form.append("lat", workerLocation.latitude);
+        form.append("lng", workerLocation.longitude);
+        form.append("ExactAddress", displayAddress);
+        form.append("image", image);
 
         try {
-            // console.log("Submitting Karigar Data to Backend API:", formData);
-            const res = await workerService.createWorker(form)
-
-            if(res.statusCode === 201 || res.successs){
-                dispatch(
-                    setLoginData({
-                        user: {
-                            id: res.data.id,
-                            username: res.data.user,
-                            phone: res.data.phoneNo,
-                            role: res.data.role,
-                        },
-                        accessToken: res.data.token
-                    })
-                )
+            const res = await workerService.createWorker(form);
+            if (!res?.success || res.statusCode !== 201) {
+                throw new Error(res?.message || 'Worker registration failed');
             }
-            alert("Karigar Registration Successful!");
-            navigate("/")
 
-        } catch (error) {
-            console.error("Registration error:", error.response?.data || error.message);
-            alert(error.response?.data?.message || "Registration failed!");
+            dispatch(
+                setLoginData({
+                    user: {
+                        id: res.data.id,
+                        username: res.data.user,
+                        phone: res.data.phoneNo,
+                        role: res.data.role,
+                    },
+                    accessToken: res.data.token
+                })
+            );
+            alert("Karigar Registration Successful!");
+            navigate("/");
+        } catch (registrationError) {
+            console.error("Registration error:", registrationError.response?.data || registrationError.message);
+            setError(registrationError.response?.data?.message || registrationError.message || "Registration failed!");
+        } finally {
+            setLoading(false);
         }
     };
+
 
     return (
         <div className="bg-[#f8fafc] text-slate-900 font-sans antialiased min-h-screen flex flex-col ">
@@ -268,6 +316,11 @@ export default function RegisterWorker() {
 
                         {/* Main Form Area */}
                         <form onSubmit={handleSubmit} className="p-6 md:p-8 flex flex-col justify-between flex-grow space-y-6">
+                            {error && (
+                                <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                                    {error}
+                                </p>
+                            )}
 
                             {/* STEP 1: Personal Details */}
                             {currentStep === 1 && (
@@ -515,52 +568,94 @@ export default function RegisterWorker() {
                                     </div>
 
                                     {/* State, City, Pincode */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                                         <div>
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                            <label htmlFor="state" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                                                 State (राज्य) <span className="text-red-500">*</span>
                                             </label>
                                             <select
+                                                id="state"
                                                 value={state}
                                                 onChange={(e) => setState(e.target.value)}
                                                 className="w-full h-11 px-3 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 text-sm focus:border-amber-600 outline-none"
                                             >
+                                                <option value="">Select state</option>
                                                 <option value="Karnataka">Karnataka</option>
                                                 <option value="Maharashtra">Maharashtra</option>
                                                 <option value="Delhi NCR">Delhi NCR</option>
                                                 <option value="Uttar Pradesh">Uttar Pradesh</option>
                                                 <option value="Telangana">Telangana</option>
                                             </select>
+                                            {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                            <label htmlFor="city" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                                                 City / District (शहर) <span className="text-red-500">*</span>
                                             </label>
                                             <select
+                                                id="city"
                                                 value={city}
                                                 onChange={(e) => setCity(e.target.value)}
                                                 className="w-full h-11 px-3 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 text-sm focus:border-amber-600 outline-none"
                                             >
+                                                <option value="">Select city</option>
                                                 <option value="Bengaluru">Bengaluru</option>
                                                 <option value="Mumbai">Mumbai</option>
                                                 <option value="Delhi NCR">Delhi NCR</option>
                                                 <option value="Pune">Pune</option>
                                                 <option value="Hyderabad">Hyderabad</option>
                                             </select>
+                                            {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                                                Postal Pincode (पिन कोड) <span className="text-red-500">*</span>
+                                            <label htmlFor="pincode" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                                Pincode <span className="text-red-500">*</span>
                                             </label>
                                             <input
                                                 type="text"
-                                                maxLength="6"
+                                                id="pincode"
+                                                inputMode="numeric"
+                                                maxLength={6}
                                                 value={pincode}
                                                 onChange={(e) => setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                                                placeholder="6-digit PIN"
-                                                className="w-full h-11 px-3.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 text-sm focus:border-amber-600 outline-none"
+                                                placeholder="6-digit pincode"
+                                                className="w-full h-11 px-3 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 text-sm focus:border-amber-600 outline-none"
                                             />
                                             {errors.pincode && <p className="text-red-500 text-xs mt-1">{errors.pincode}</p>}
+                                        </div>
+
+                                        {/* current location */}
+                                        <div className="min-w-0">
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                                Current Location
+                                                    <span className="text-red-500"> *</span>
+                                            </label>
+                                            <button
+                                                type="button"
+                                                onClick={handleDetectLocation}
+                                                disabled={loading}
+                                                className="flex w-full min-w-0 items-center justify-center rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-left transition disabled:cursor-wait disabled:opacity-60"
+                                            >
+                                                <div className="flex w-full items-center gap-1">
+                                                    {loading ? (
+                                                        "Finding your location..."
+                                                    ) : (
+                                                        <>
+                                                            <MapPin className="h-7 w-5 shrink-0 text-[#D99416]" />
+                                                            {displayAddress ? (
+                                                                <p className="truncate max-w-[250px]" title={displayAddress}>
+                                                                    {displayAddress}
+                                                                </p>
+                                                            ) : (
+                                                                <span className="text-sm font-medium text-slate-500">
+                                                                    Detect Current Location
+                                                                </span>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </button>
+                                            {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
                                         </div>
                                     </div>
 

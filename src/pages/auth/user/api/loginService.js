@@ -15,7 +15,7 @@ export const loginService = {
   verifyOtp: async (payload) => {
     console.log(payload);    
       const res = await apiInstance.post("/api/v1/user/verify-otp", payload, {
-        // withCredentials: true,
+        withCredentials: true,
       });
       return res.data;
   },

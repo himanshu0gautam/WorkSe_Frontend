@@ -129,19 +129,23 @@ apiInstance.interceptors.response.use(
     const originalRequest = error.config;
 
     // Agar access token expire ho gaya (401) aur request pehle retry nahi hui hai
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         // Aapke backend ka refresh token endpoint call hoga
         const response = await axios.post(
-          'http://localhost:8000/api/v1/user/refresh-token', // Apna exact route check kar lein
+          `${config.baseURL}/api/v1/user/refresh-token`,
           {},
           { withCredentials: true }
         );
 
         // Aapka backend ApiResponse(200, accessToken, ...) bhej raha hai, toh naya token yahan milega:
-        const newAccessToken = response.data.data; 
+        const newAccessToken = response.data?.data || response.data?.accessToken;
+        
+        if (!response.data.success || typeof newAccessToken !== 'string') {
+          throw new Error('Token refresh response did not include an access token');
+        }
 
         // Redux memory mein naya access token save karein
         store.dispatch(setAccessToken(newAccessToken));

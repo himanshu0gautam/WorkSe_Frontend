@@ -23,8 +23,9 @@ import {
 import logo from '../../../public/logo2.png'
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../redux/authSlice';
+import { updateUserLocation } from '../../services/loactionService';
 
-const Navbar = () => {
+const Navbar = ({ onLocationUpdate }) => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -49,6 +50,71 @@ const Navbar = () => {
     dispatch(logout());
   };
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [displayAddress, setDisplayAddress] = useState(
+    JSON.parse(localStorage.getItem('user_location'))?.address || ''
+  );
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        let formattedAddress = "Unknown Location"
+        // const locationData = { latitude, longitude, timestamp: Date.now() };
+
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+          )
+          const data = await res.json();
+
+          if (data && data.display_name) {
+            formattedAddress = data.display_name
+          }
+
+        } catch (error) {
+          console.warn("Could not fetch readable address name:", geoError);
+        }
+
+        const locationData = {
+          latitude,
+          longitude,
+          address: formattedAddress,
+          timestamp: Date.now()
+        }
+
+        // 1. Save to Local Storage
+        localStorage.setItem('user_location', JSON.stringify(locationData));
+        setDisplayAddress(formattedAddress)
+
+        try {
+          if (isAuthenticated) {
+            await updateUserLocation(latitude, longitude, formattedAddress);
+          }
+          if (onLocationUpdate) onLocationUpdate(locationData);
+          alert(isAuthenticated ? 'Location saved successfully!' : 'Location saved on this device.');
+        } catch {
+          setError('Saved locally, but failed to sync with server.');
+        } finally {
+          setLoading(false);
+        }
+      },
+      (err) => {
+        setLoading(false);
+        setError(err.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white text-[#202B4C] shadow-sm">
@@ -69,9 +135,23 @@ const Navbar = () => {
             </a>
           </div>
 
+            {/* location */}
           <div className="hidden items-center gap-3 lg:flex">
-            <button className="hidden min-w-0 items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-left transition hover:bg-[#2d3b63] xl:flex">
-              <MapPin className="h-7 w-5 shrink-0 text-[#D99416]" />
+            {error && <p style={{ color: 'red' }}>{error}</p>}
+            <button
+              onClick={handleGetLocation}
+              disabled={loading}
+              className="hidden min-w-0 items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-left transition hover:bg-[#2d3b63] xl:flex hover:text-white"
+            >
+              <div className="flex items-center gap-1">
+                {loading ? "Finding Location..." : <MapPin className="h-7 w-5 shrink-0 text-[#D99416]" />}
+                 {displayAddress && (
+                  <p className='truncate max-w-[250px]'>
+                    {displayAddress}
+                  </p>
+                )}
+              </div>
+
               <span className="min-w-0">
                 {/* <span className="block text-xs font-medium text-slate-500">Location</span> */}
                 <span className="flex items-center gap-1 whitespace-nowrap text-sm font-bold text-slate-800">
@@ -178,10 +258,10 @@ const Navbar = () => {
                 <Languages className="h-4 w-4 text-[#D99416]" /> EN <span className="text-slate-300">|</span> हिंदी
               </button>
               <span className="h-7 w-px bg-slate-200" />
-              <a href="#help" className="flex items-center gap-2 whitespace-nowrap transition hover:text-[#202B4C]">
+              <p className="flex items-center gap-2 whitespace-nowrap transition hover:text-[#202B4C]">
                 <Headset className="h-5 w-5 text-[#D99416]" />
                 Helpline: <span className="text-xs text-slate-800">1800-BULAO-MISTRI</span>
-              </a>
+              </p>
             </div>
           </div>
         </div>
@@ -212,7 +292,7 @@ const Navbar = () => {
               >
                 Real Stories
               </Link>
-              <a href="#help" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 py-3 font-medium text-slate-600">
+              <a href="" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 py-3 font-medium text-slate-600">
                 <Headset className="h-5 w-5 text-[#D99416]" /> Helpline: 1800-BULAO-MISTRI
               </a>
             </nav>
@@ -236,6 +316,4 @@ const Navbar = () => {
 }
 
 export default Navbar
-
-
 
