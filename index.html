@@ -5,6 +5,20 @@
     <link rel="icon" type="image/svg+xml" href="/icons.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WorkSe</title>
+    <script>
+      (function () {
+        var theme = "light";
+        try {
+          var savedTheme = localStorage.getItem("theme");
+          if (savedTheme === "light" || savedTheme === "dark") {
+            theme = savedTheme;
+          }
+        } catch (error) {
+          console.warn("Could not read the saved theme preference.", error);
+        }
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

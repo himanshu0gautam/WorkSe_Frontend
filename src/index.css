@@ -28,12 +28,16 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 font-sans antialiased selection:bg-indigo-500/30 selection:text-indigo-200 min-h-screen;
+    @apply bg-slate-50 text-slate-900 font-sans antialiased min-h-screen;
     font-family: var(--font-sans);
+  }
+
+  ::selection {
+    background-color: rgb(var(--selection-bg));
+    color: rgb(var(--selection-text));
   }
 }
 
-/* Custom Scrollbar for Chat & Dashboards */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -42,5 +46,84 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-800 rounded-full hover:bg-slate-700 transition-colors;
+  background-color: rgb(var(--scrollbar-thumb));
+  border-radius: 9999px;
+}
+
+:root {
+  color-scheme: light;
+  --surface: 255 255 255;
+  --bg: 248 250 252;
+  --bg-soft: 241 245 249;
+  --line-soft: 241 245 249;
+  --line: 226 232 240;
+  --line-strong: 203 213 225;
+  --faint: 148 163 184;
+  --secondary: 100 116 139;
+  --body: 71 85 105;
+  --heading: 15 23 42;
+  --selection-bg: 217 148 22 / 0.25;
+  --selection-text: 15 23 42;
+  --scrollbar-thumb: 148 163 184;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --surface: 30 41 59;
+  --bg: 15 23 42;
+  --bg-soft: 30 41 59;
+  --line-soft: 30 41 59;
+  --line: 51 65 85;
+  --line-strong: 71 85 105;
+  --faint: 148 163 184;
+  --secondary: 203 213 225;
+  --body: 226 232 240;
+  --heading: 248 250 252;
+  --selection-bg: 217 148 22 / 0.35;
+  --selection-text: 255 255 255;
+  --scrollbar-thumb: 71 85 105;
+}
+
+body {
+  background-color: rgb(var(--bg));
+  color: rgb(var(--body));
+}
+
+html,
+body {
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+[data-theme="dark"] [class~="text-[#0B132B]"],
+[data-theme="dark"] [class~="text-[#0b132b]"],
+[data-theme="dark"] [class~="text-[#202B4C]"],
+[data-theme="dark"] [class~="text-[#1e293b]"],
+[data-theme="dark"] [class~="text-[#0f172a]"] {
+  color: rgb(var(--heading));
+}
+
+[data-theme="dark"] [class~="text-[#475569]"],
+[data-theme="dark"] [class~="text-[#64748b]"] {
+  color: rgb(var(--body));
+}
+
+[data-theme="dark"] [class~="bg-[#F8F9FA]"] {
+  background-color: rgb(var(--bg));
+}
+
+[data-theme="dark"] [class~="bg-[#F8FAFC]"] {
+  background-color: rgb(var(--surface));
+}
+
+[data-theme="dark"] [class~="bg-[#f8fafc]"],
+[data-theme="dark"] [class~="bg-[#f1f5f9]"],
+[data-theme="dark"] [class~="bg-[#FCFBF9]"],
+[data-theme="dark"] [class~="bg-[#FAF8F5]"],
+[data-theme="dark"] [class~="bg-[#FFF8F5]"],
+[data-theme="dark"] [class~="bg-[#FAF7F9]"] {
+  background-color: rgb(var(--bg-soft));
+}
+
+[data-theme="dark"] [class~="border-[#e2e8f0]"] {
+  border-color: rgb(var(--line));
 }

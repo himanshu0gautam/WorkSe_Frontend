@@ -1,29 +1,36 @@
 /** @type {import('tailwindcss').Config} */
+const v = (name) => `rgb(var(${name}) / <alpha-value>)`;
+
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
-  darkMode: 'class',
+  content: ["./index.html", "./src/**/*.{js,jsx}"],
+  darkMode: ["selector", '[data-theme="dark"]'],
   theme: {
     extend: {
-      colors: {
-        primary: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
+      backgroundColor: {
+        white: v("--surface"),
+        slate: { 50: v("--bg"), 100: v("--bg-soft"), 200: v("--line") },
+      },
+      borderColor: {
+        slate: { 100: v("--line-soft"), 200: v("--line"), 300: v("--line-strong") },
+      },
+      divideColor: {
+        slate: { 100: v("--line-soft"), 200: v("--line") },
+      },
+      textColor: {
+        slate: {
+          50: v("--heading"),
+          100: v("--heading"),
+          200: v("--secondary"),
+          300: v("--secondary"),
+          400: v("--faint"),
+          500: v("--secondary"),
+          600: v("--body"),
+          700: v("--body"),
+          800: v("--heading"),
+          900: v("--heading"),
         },
-        surface: {
-          light: '#ffffff',
-          dark: '#0f172a',
-          card: '#1e293b',
-        }
       },
     },
   },
-  plugins: [],
-}
-
+};
 

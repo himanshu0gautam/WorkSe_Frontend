@@ -349,7 +349,7 @@ export default function AddNewWork() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] text-slate-800 antialiased py-6 sm:py-10 px-4 sm:px-6 lg:px-8 font-sans">
+    <div className="min-h-screen bg-slate-50 text-slate-800 antialiased py-6 sm:py-10 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-[1240px] mx-auto">
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">

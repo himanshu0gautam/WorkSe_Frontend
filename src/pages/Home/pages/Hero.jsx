@@ -25,6 +25,7 @@ import {
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
 import { heroService } from '../api/heroService';
+import Poster from '../../../assets/hero-poster.jpg'
 
 // --- CATEGORIES DATA ---
 const TRADE_CATEGORIES = [
@@ -147,9 +148,12 @@ const HeroSection = () => {
   const [searchMode, setSearchMode] = useState('worker');
 
   return (
-    <section className="bg-[#0B132B] text-white pt-10 pb-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <section
+      className="bg-[#0B132B] text-white pt-10 pb-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: `url(${Poster})` }}
+    >
       {/* Decorative gradient blur background */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-[#1C2541]/50 to-transparent pointer-events-none rounded-b-full blur-3xl opacity-60"></div>
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-[#1C2541]/80 to-transparent pointer-events-none rounded-b-full blur-3xl opacity-60">hum</div>
 
       <div className="max-w-5xl mx-auto text-center relative z-10">
         {/* Top Tag Pill */}
@@ -332,7 +336,7 @@ const TradeCategories = () => {
                 </div>
 
                 {/* Titles */}
-                <h3 className="text-lg font-bold text-[#0B132B] group-hover:text-[#C68B59] transition-colors">
+                <h3 className="text-lg font-bold group-hover:text-[#C68B59] transition-colors">
                   {item.title}
                 </h3>
                 <p className="text-xs font-medium text-slate-500 mb-3">{item.hindiTitle}</p>
@@ -361,7 +365,7 @@ const TradeCategories = () => {
 
 const ZeroBrokerDifference = () => {
   return (
-    <section id="difference" className="py-14 bg-white border-t border-slate-200">
+    <section id="difference" className="py-14 bg-[#F8F9FA] border-t border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="text-xs font-bold text-[#D4A373] uppercase tracking-wider">Why Choose Us</span>
@@ -380,7 +384,7 @@ const ZeroBrokerDifference = () => {
             <div className="inline-block bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full mb-4">
               Traditional Marketplaces & Apps
             </div>
-            <h3 className="text-xl font-black text-slate-800 mb-4">High Commissions & Middlemen</h3>
+            <h3 className="text-xl font-black text-slate-400 mb-4">High Commissions & Middlemen</h3>
 
             <ul className="space-y-3.5 text-xs sm:text-sm text-slate-600">
               <li className="flex items-start gap-2.5">
@@ -629,7 +633,7 @@ const Testimonials = () => {
               <div className="flex items-center space-x-3 pt-4 border-t border-slate-100">
                 <img src={t.avatar} alt={t.name} className="w-10 h-10 rounded-full object-cover border border-[#D4A373]" />
                 <div>
-                  <h5 className="font-bold text-[#0B132B] text-xs sm:text-sm">{t.name}</h5>
+                  <h5 className="font-bold text-xs sm:text-sm">{t.name}</h5>
                   <p className="text-[11px] text-slate-400">{t.role}</p>
                 </div>
               </div>
@@ -758,7 +762,7 @@ export default function Hero() {
   }, [hash]);
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-slate-800 font-sans antialiased selection:bg-[#D4A373] selection:text-[#0B132B]">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased selection:bg-[#D4A373] selection:text-[#0B132B]">
 
       <HeroSection />
 

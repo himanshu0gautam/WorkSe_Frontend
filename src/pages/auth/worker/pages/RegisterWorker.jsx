@@ -221,7 +221,7 @@ export default function RegisterWorker({ onLocationUpdate }) {
 
 
     return (
-        <div className="bg-[#f8fafc] text-slate-900 font-sans antialiased min-h-screen flex flex-col ">
+        <div className="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen flex flex-col ">
             {/* Utility Grid Background Container */}
             <div className="flex-grow max-w-7xl w-full mx-auto px-4 md:px-8 py-8 md:py-10 ">
 

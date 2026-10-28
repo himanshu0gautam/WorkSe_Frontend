@@ -24,6 +24,7 @@ import logo from '../../../public/logo2.png'
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../redux/authSlice';
 import { updateUserLocation } from '../../services/loactionService';
+import ThemeToggle from "../../services/ThemeToggle"
 
 const Navbar = ({ onLocationUpdate }) => {
 
@@ -135,18 +136,18 @@ const Navbar = ({ onLocationUpdate }) => {
             </a>
           </div>
 
-            {/* location */}
+          {/* location */}
           <div className="hidden items-center gap-3 lg:flex">
             {error && <p style={{ color: 'red' }}>{error}</p>}
             <button
               onClick={handleGetLocation}
               disabled={loading}
-              className="hidden min-w-0 items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-left transition hover:bg-[#2d3b63] xl:flex hover:text-white"
+              className="hidden min-w-0 items-center rounded-full text-gray-700 border border-slate-200 bg-slate-50 px-4 py-2.5 text-left transition hover:bg-[#2d3b63] xl:flex hover:text-white"
             >
               <div className="flex items-center gap-1">
                 {loading ? "Finding Location..." : <MapPin className="h-7 w-5 shrink-0 text-[#D99416]" />}
-                 {displayAddress && (
-                  <p className='truncate max-w-[250px]'>
+                {displayAddress && (
+                  <p className='truncate max-w-[250px] '>
                     {displayAddress}
                   </p>
                 )}
@@ -181,10 +182,10 @@ const Navbar = ({ onLocationUpdate }) => {
                   {/* Trigger Button */}
                   <div
                     onClick={() => setIsOpen(!isOpen)}
-                    className="flex min-h-12 items-center gap-2 rounded-full border-2 border-[#202B4C] px-4 text-sm font-bold transition hover:bg-slate-50 cursor-pointer select-none"
+                    className="flex min-h-12 items-center gap-2 rounded-full border border-[#202B4C] px-4 text-sm font-bold transition hover:bg-slate-50 cursor-pointer select-none"
                   >
                     <span className="text-[1rem] font-semibold capitalize text-slate-700 flex items-center gap-1.5">
-                      <UserIcon className="w-4 h-4 text-[#202B4C]" />
+                      <UserIcon className="w-4 h-4" />
                       <ChevronDown className={`w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                     </span>
                   </div>
@@ -243,15 +244,26 @@ const Navbar = ({ onLocationUpdate }) => {
           <div className="mx-auto flex min-h-[52px] max-w-[1440px] items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
             <nav className="flex h-full min-w-0 items-center gap-7 text-sm font-semibold pl-8">
               <Link to="/how-it-work">
-                <div className="flex h-[52px] items-center gap-2 text-slate-600 transition hover:text-[#202B4C]">
+                <div className="relative whitespace-nowrap items-center gap-2 text-slate-600 duration-200 hover:text-[#D99416] after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:bg-[#D99416] after:transition-all after:duration-300 hover:after:w-full">
                   How it Work
                 </div>
               </Link>
+
               <Link to="/our-vision">
-                <div className="whitespace-nowrap text-slate-600 transition hover:text-[#202B4C]">Our Vision</div>
+                <div className="relative whitespace-nowrap text-slate-600 duration-200 hover:text-[#D99416] after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:bg-[#D99416] after:transition-all after:duration-300 hover:after:w-full">
+                  Our Vision
+                </div>
               </Link>
-              <Link to={`${ROUTES.HOME}#realStories`} className="flex whitespace-nowrap items-center gap-2 text-slate-600 transition hover:text-[#202B4C]">Real Stories</Link>
-              <Link to="/add-work" className="whitespace-nowrap text-slate-600 transition hover:text-[#202B4C] border-b border-transparent hover:border-[#D99416]">Add New Work</Link>
+
+              <Link to={`${ROUTES.HOME}#realStories`}
+                className="relative flex whitespace-nowrap items-center gap-2 text-slate-600 duration-200 hover:text-[#D99416] after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:bg-[#D99416] after:transition-all after:duration-300 hover:after:w-full">
+                Real Stories
+              </Link>
+
+              <Link to="/add-work"
+                className="relative flex whitespace-nowrap items-center gap-2 text-slate-600 duration-200 hover:text-[#D99416] after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:bg-[#D99416] after:transition-all after:duration-300 hover:after:w-full">
+                Add New Work
+              </Link>
             </nav>
             <div className="flex shrink-0 items-center gap-5 text-xs font-medium text-slate-600">
               <button className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 font-semibold transition hover:border-[#D99416]">
@@ -262,6 +274,9 @@ const Navbar = ({ onLocationUpdate }) => {
                 <Headset className="h-5 w-5 text-[#D99416]" />
                 Helpline: <span className="text-xs text-slate-800">1800-BULAO-MISTRI</span>
               </p>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+              </div>
             </div>
           </div>
         </div>
@@ -296,6 +311,9 @@ const Navbar = ({ onLocationUpdate }) => {
                 <Headset className="h-5 w-5 text-[#D99416]" /> Helpline: 1800-BULAO-MISTRI
               </a>
             </nav>
+            <div className="flex justify-end border-t border-slate-200 pt-4">
+              <ThemeToggle />
+            </div>
             <div className="flex gap-3 pt-4">
               <button className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border-2 border-[#202B4C] px-3 text-sm font-bold">
                 <Handshake className="h-4 w-4 text-[#D99416]" /> Register
@@ -316,4 +334,3 @@ const Navbar = ({ onLocationUpdate }) => {
 }
 
 export default Navbar
-

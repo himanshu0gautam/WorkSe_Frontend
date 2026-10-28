@@ -171,7 +171,7 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen bg-[#f1f5f9] flex items-center justify-center p-4 font-sans antialiased">
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans antialiased">
             {/* Modal Container */}
             <div className="relative w-full max-w-[480px] bg-white rounded-2xl shadow-[0_10px_35px_rgba(0,0,0,0.08)] border border-[#e2e8f0] p-6 md:p-8">
 
@@ -205,7 +205,7 @@ export default function Login() {
                     </div>
                 )}
                 {/* Divider */}
-                <div className="w-full h-[1px] bg-[#f1f5f9] my-4"></div>
+                <div className="w-full h-[1px] bg-slate-100 my-4"></div>
 
                 {/* Form Container */}
                 <div className="space-y-5">

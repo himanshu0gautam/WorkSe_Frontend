@@ -25,12 +25,12 @@ export class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-slate-950">
-          <div className="max-w-md w-full p-6 rounded-2xl bg-slate-900 border border-rose-500/30 text-center shadow-2xl">
+        <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
+          <div className="max-w-md w-full p-6 rounded-2xl bg-white border border-rose-500/30 text-center shadow-2xl">
             <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
               <AlertOctagon className="w-6 h-6" />
             </div>
-            <h2 className="text-lg font-bold text-white mb-2">Something went wrong</h2>
+            <h2 className="text-lg font-bold text-slate-900 mb-2">Something went wrong</h2>
             <p className="text-xs text-slate-400 mb-6">
               {this.state.error?.message || 'An unexpected runtime error crashed this view.'}
             </p>

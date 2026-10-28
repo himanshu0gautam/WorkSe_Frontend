@@ -5,7 +5,7 @@ import {
 
 export default function OurVision() {
   return (
-    <div className="bg-[#f8fafc] text-[#1e293b] font-sans antialiased min-h-screen flex flex-col selection:bg-[#d97706] selection:text-white">
+    <div className="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen flex flex-col selection:bg-[#d97706] selection:text-white">
       
       {/* ---------------------------------------------------- */}
       {/* SECTION 1: Our Vision Hero Section */}

@@ -112,7 +112,7 @@ const HeroSearch = () => {
 
       {/* Subtitle */}
       <p className="mt-2.5 text-slate-600 text-xs sm:text-sm font-medium max-w-2xl mx-auto leading-relaxed">
-        Connect directly with verified local tradespeople around <span className="font-bold text-slate-800">HSR Layout, Bengaluru</span>. No call center delays, no commission markup.
+        Connect directly with verified local tradespeople around <span className="font-bold text-[#0B132B]">HSR Layout, Bengaluru</span>. No call center delays, no commission markup.
       </p>
 
       {/* Main Search Input Container */}
@@ -341,7 +341,7 @@ const TrustSection = () => {
       <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-10 shadow-xs">
         {/* Section Title */}
         <div className="text-center max-w-2xl mx-auto mb-8">
-          <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#0B132B]">
+          <h2 className="text-2xl sm:text-3xl font-serif font-bold text-black">
             Why Homeowners Trust WorkSe
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-slate-500 leading-relaxed">
@@ -357,7 +357,7 @@ const TrustSection = () => {
               <ShieldCheck className="w-6 h-6" />
             </div>
             <h3 className="text-base font-bold text-[#0B132B] mb-2">Aadhaar & Police Verified</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-xs text-slate-500 leading-relaxed">
               Every technician undergoes digital government ID verification and background check before listing on the directory.
             </p>
           </div>
@@ -368,7 +368,7 @@ const TrustSection = () => {
               <IndianRupee className="w-6 h-6" />
             </div>
             <h3 className="text-base font-bold text-[#0B132B] mb-2">100% Direct Payment</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-xs text-slate-500 leading-relaxed">
               Pay directly to the worker via your preferred UPI app (GPay, PhonePe, Paytm) or cash. Zero hidden platform cuts.
             </p>
           </div>
@@ -379,7 +379,7 @@ const TrustSection = () => {
               <MessageSquareText className="w-6 h-6" />
             </div>
             <h3 className="text-base font-bold text-[#0B132B] mb-2">Real-Time Phone & Chat</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-xs text-slate-500 leading-relaxed">
               No endless booking bots. Speak directly to the tradesperson, discuss the problem, and agree on timing instantly.
             </p>
           </div>
@@ -391,7 +391,7 @@ const TrustSection = () => {
 
 export default function FindWorker() {
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 antialiased font-sans">
+    <div className="min-h-screen antialiased font-sans">
       {/* Top Banner Badge */}
       {/* <HeaderBadge /> */}
 

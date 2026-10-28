@@ -425,7 +425,7 @@ export default function FindJob() {
 
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 antialiased font-sans pb-16">
+    <div className="min-h-screen antialiased font-sans pb-16">
       {/* Top Title Section */}
       <TopHeader />
 
