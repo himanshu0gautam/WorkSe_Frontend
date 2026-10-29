@@ -28,6 +28,8 @@ import {
   Volume2,
   Clock,
 } from 'lucide-react';
+import { newWorkServices } from '../api/newWorkService';
+import VoiceRecorder from '../../../services/VoiceRecorder';
 
 // --- DATA CONFIGURATION ---
 const TRADES = [
@@ -169,27 +171,28 @@ const TRADES = [
   },
 ];
 
-const WAVEFORM_HEIGHTS = [
-  8, 14, 20, 12, 16, 26, 18, 10, 24, 30, 16, 22, 28, 14, 18, 24, 10, 16, 20, 14, 26, 32, 20, 14, 22, 16, 12, 8
-];
+// const WAVEFORM_HEIGHTS = [
+//   8, 14, 20, 12, 16, 26, 18, 10, 24, 30, 16, 22, 28, 14, 18, 24, 10, 16, 20, 14, 26, 32, 20, 14, 22, 16, 12, 8
+// ];
 
 export default function AddNewWork() {
   // --- FORM STATES ---
-  const [selectedTradeId, setSelectedTradeId] = useState('plumber');
-  const [selectedTasks, setSelectedTasks] = useState(['Tap Leakage / पाइप लीकेज']);
+  const [selectedTradeId, setSelectedTradeId] = useState('');
+  const [selectedTasks, setSelectedTasks] = useState([]);
   const [otherTask, setOtherTask] = useState('');
 
   // Problem description states
-  const [workTitle, setWorkTitle] = useState('Kitchen Sink Tap Leaking continuously under slab');
+  const [workTitle, setWorkTitle] = useState(''); // Kitchen Sink Tap Leaking continuously under slab
   const [description, setDescription] = useState(
-    'The hot-water flexible hose pipe beneath the granite counter is spurting water. Have turned off main valve for now. Need quick replacement and washer change today.'
+    '' //The hot-water flexible hose pipe beneath the granite counter is spurting water. Have turned off main valve for now. Need quick replacement and washer change today.
   );
   const [isSpeechListening, setIsSpeechListening] = useState(false);
 
   // Audio voice note states
-  const [hasVoiceNote, setHasVoiceNote] = useState(true);
+  const [hasVoiceNote, setHasVoiceNote] = useState(false);
+  const [voiceAudio, setVoiceAudio] = useState(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [audioProgress, setAudioProgress] = useState(24);
+  const [audioProgress, setAudioProgress] = useState(0);
   const [isReRecording, setIsReRecording] = useState(false);
 
   // Photos & Video uploads (Empty select image button by default)
@@ -199,7 +202,7 @@ export default function AddNewWork() {
   const videoInputRef = useRef(null);
 
   // Location & Timing states
-  const [locality, setLocality] = useState('Flat 402, Green Glen Layout, Bellandur, Bengaluru 560103');
+  const [locality, setLocality] = useState(''); //Flat 402, Green Glen Layout, Bellandur, Bengaluru 560103
   const [isGpsLocating, setIsGpsLocating] = useState(false);
   const [urgency, setUrgency] = useState('today');
   const [customDate, setCustomDate] = useState('');
@@ -210,8 +213,8 @@ export default function AddNewWork() {
   const [fixedBudget, setFixedBudget] = useState('');
 
   // Contact Details states
-  const [fullName, setFullName] = useState('Vikram Malhotra');
-  const [mobileNumber, setMobileNumber] = useState('+91 98450 12891');
+  const [fullName, setFullName] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [contactMode, setContactMode] = useState('direct');
 
   // Submit / Success Modal state
@@ -268,6 +271,7 @@ export default function AddNewWork() {
       id: Math.random().toString(36).substring(2, 9),
       name: file.name,
       url: URL.createObjectURL(file),
+      file,
     }));
 
     setUploadedPhotos((prev) => [...prev, ...newPhotos]);
@@ -284,6 +288,7 @@ export default function AddNewWork() {
     setUploadedVideo({
       name: file.name,
       url: URL.createObjectURL(file),
+      file,
     });
     if (e.target) e.target.value = '';
   };
@@ -339,21 +344,83 @@ export default function AddNewWork() {
     }, 1200);
   };
 
-  const handleSubmit = (e) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const createNewWorkSubmit = async (e) => {
     e.preventDefault();
+
+    setLoading(true);
     setIsSubmitting(true);
+    setError(null);
+
+    const formData = new FormData();
+    const userFilledData = {
+      category: currentTrade.name,
+      otherSpecficTask: [...selectedTasks, otherTask].filter(Boolean).join(', '),
+      tradeId: selectedTradeId,
+      worktitle: workTitle,
+      workDescription: description,
+      voiceRec: hasVoiceNote,
+      address: locality,
+      preferredDay: urgency,
+      preferredTimeSlot: timeSlot,
+      bugdet: pricingType === 'fixed' ? fixedBudget : '',
+      fullname: fullName,
+      phone: mobileNumber,
+      contactMode,
+      customDate: urgency === 'custom' ? customDate : '',
+      phoneCount: uploadedPhotos.length,
+      images: uploadedPhotos.map((photo) => photo.file).filter(Boolean),
+      video: uploadedVideo?.file || null,
+      audio: voiceAudio,
+    };
+
+    Object.entries(userFilledData).forEach(([key, value]) => {
+      if (key !== 'images' && key !== 'video' && !Array.isArray(value)) {
+        formData.append(key, String(value ?? ''));
+      }
+    });
+
+    userFilledData.images.forEach((file, index) => {
+      formData.append('images', file, file.name || `photo-${index + 1}`);
+    });
+
+    if (userFilledData.video) {
+      formData.append('video', userFilledData.video, userFilledData.video.name);
+    }
+
+    if (userFilledData.audio) {
+      formData.append('audio', userFilledData.audio, userFilledData.audio.name);
+    }
+
+    try {
+      setLoading(true)
+      
+      const res = await newWorkServices.createNewWork(formData)
+      if (!res?.success) {
+        throw new Error(res?.message || "Work Upload failed")
+      }
+    } catch (error) {
+      console.error("Work upload error:", error.response?.data || error.message)
+      setError(error.response?.data?.message || error.message || "work failed!")
+    } finally {
+      setLoading(false)
+    }
+
     setTimeout(() => {
+      setLoading(false);
       setIsSubmitting(false);
       setIsSubmitted(true);
     }, 900);
-  };
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 antialiased py-6 sm:py-10 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-[1240px] mx-auto">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={createNewWorkSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-            
+
             {/* ========================================================= */}
             {/* LEFT / MAIN COLUMN (8 COLS) */}
             {/* ========================================================= */}
@@ -463,19 +530,17 @@ export default function AddNewWork() {
                         <div
                           key={trade.id}
                           onClick={() => handleSelectTrade(trade.id)}
-                          className={`p-3 rounded-xl border text-left cursor-pointer transition flex items-center justify-between gap-3 ${
-                            isSelected
+                          className={`p-3 rounded-xl border text-left cursor-pointer transition flex items-center justify-between gap-3 ${isSelected
                               ? 'border-2 border-[#C8481A] bg-[#FFF8F5]'
                               : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <div
-                              className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                                isSelected
+                              className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isSelected
                                   ? 'bg-[#C8481A] text-white'
                                   : 'bg-slate-100 text-slate-600'
-                              }`}
+                                }`}
                             >
                               <IconComp className="w-4 h-4" />
                             </div>
@@ -501,8 +566,8 @@ export default function AddNewWork() {
                 </div>
 
                 {/* Specific Plumber Task Chips */}
-                <div className="mt-5">
-                  <p className="text-xs font-bold text-slate-800 mb-2.5">
+                <div className="mt-8">
+                  <p className="text-sm font-bold text-slate-800 mb-2.5">
                     Specific {currentTrade.name} Task (चुने क्या काम है):
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -513,11 +578,11 @@ export default function AddNewWork() {
                           key={task}
                           type="button"
                           onClick={() => handleTaskToggle(task)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 border cursor-pointer ${
-                            isChecked
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 border cursor-pointer ${isChecked
                               ? 'bg-[#7C2D12] text-white border-[#7C2D12] shadow-xs'
                               : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                          }`}
+                            }`}
+                          onDoubleClick={() => handleTaskToggle("")}
                         >
                           {isChecked && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
                           <span>{task}</span>
@@ -528,16 +593,16 @@ export default function AddNewWork() {
                 </div>
 
                 {/* Specify Other Task Input */}
-                <div className="mt-4">
-                  <label className="text-xs font-semibold text-slate-700 mb-1.5 block">
+                <div className="mt-6">
+                  <label className="text-sm font-bold text-slate-800 mb-1.5 block">
                     Specify Other Task / अन्य काम का विवरण लिखें
                   </label>
                   <input
                     type="text"
                     value={otherTask}
                     onChange={(e) => setOtherTask(e.target.value)}
-                    placeholder="e.g., Balcony drain pipe choking, kitchen sink mixer install, etc. (विस्तार से लिखें)"
-                    className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#C8481A] focus:ring-1 focus:ring-[#C8481A] transition bg-white"
+                    placeholder="e.g. Other specify task"
+                    className="w-full border border-slate-200 rounded-lg px-3.5 py-3 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#C8481A] focus:ring-1 focus:ring-[#C8481A] transition bg-white"
                   />
                 </div>
               </div>
@@ -566,8 +631,8 @@ export default function AddNewWork() {
                     required
                     value={workTitle}
                     onChange={(e) => setWorkTitle(e.target.value)}
-                    placeholder="e.g. Kitchen Sink Tap Leaking continuously under slab"
-                    className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 font-medium focus:outline-none focus:border-[#C8481A] focus:ring-1 focus:ring-[#C8481A] transition"
+                    placeholder="e.g. विस्तार से लिखें (hindi & Eng).."
+                    className="w-full border border-slate-200 rounded-lg px-3.5 py-3 text-xs sm:text-sm text-slate-800 font-medium focus:outline-none focus:border-[#C8481A] focus:ring-1 focus:ring-[#C8481A] transition"
                   />
                 </div>
 
@@ -580,11 +645,10 @@ export default function AddNewWork() {
                     <button
                       type="button"
                       onClick={handleSpeechToText}
-                      className={`text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                        isSpeechListening
+                      className={`text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${isSpeechListening
                           ? 'text-red-600 animate-pulse'
                           : 'text-[#C8481A] hover:underline'
-                      }`}
+                        }`}
                     >
                       <Mic className="w-3.5 h-3.5" />
                       <span>
@@ -602,120 +666,19 @@ export default function AddNewWork() {
                 </div>
 
                 {/* Voice Note Recorder Box */}
-                <div className="border border-slate-200 bg-[#FCFBF9] rounded-xl p-3.5 sm:p-4 mb-5">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <Mic className="w-4 h-4 text-[#C8481A]" />
-                      <span className="font-bold text-xs sm:text-sm text-slate-800">
-                        Record Voice Note / बोलकर रिकॉर्ड करें
-                      </span>
-                      <span className="bg-[#059669] text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                        RECOMMENDED
-                      </span>
-                    </div>
-
-                    {hasVoiceNote && (
-                      <span className="bg-[#E8F8F0] text-[#0E8A4A] border border-[#BFF0D2] text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                        <Volume2 className="w-3.5 h-3.5" />
-                        <span>Voice Note Attached (0:{audioProgress < 10 ? `0${audioProgress}` : audioProgress})</span>
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-xs text-slate-500 mt-1 mb-3">
-                    Workers understand voice notes 2x faster in Hindi, Kannada or English.
-                  </p>
-
-                  {/* Audio Player Card */}
-                  {hasVoiceNote ? (
-                    <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 shadow-2xs">
-                      {/* Play Button */}
-                      <button
-                        type="button"
-                        onClick={toggleAudioPlay}
-                        className="w-9 h-9 rounded-full bg-[#9A3412] hover:bg-[#7C2D12] text-white flex items-center justify-center shrink-0 cursor-pointer shadow-xs transition"
-                        title={isPlayingAudio ? 'Pause' : 'Play'}
-                      >
-                        {isPlayingAudio ? (
-                          <Pause className="w-4 h-4 fill-white" />
-                        ) : (
-                          <Play className="w-4 h-4 fill-white ml-0.5" />
-                        )}
-                      </button>
-
-                      {/* File Details & Waveform */}
-                      <div className="flex-1 min-w-[200px]">
-                        <div className="flex items-center justify-between text-xs font-semibold text-slate-700 mb-1">
-                          <span>Audio_Note_Problem.m4a</span>
-                          <span className="text-slate-500 font-normal">
-                            0:{audioProgress < 10 ? `0${audioProgress}` : audioProgress} / 1:00
-                          </span>
-                        </div>
-
-                        {/* Waveform Visualization */}
-                        <div className="flex items-center gap-[3px] h-6 overflow-hidden">
-                          {WAVEFORM_HEIGHTS.map((h, idx) => {
-                            const isPast = idx < Math.floor((audioProgress / 60) * WAVEFORM_HEIGHTS.length);
-                            return (
-                              <div
-                                key={idx}
-                                style={{ height: `${h}px` }}
-                                className={`w-1 rounded-full transition-all duration-300 ${
-                                  isPast
-                                    ? 'bg-[#C8481A]'
-                                    : 'bg-slate-200 hover:bg-[#C8481A]/40'
-                                } ${isPlayingAudio ? 'animate-pulse' : ''}`}
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={handleReRecord}
-                          disabled={isReRecording}
-                          className="text-xs font-medium text-slate-700 border border-slate-200 rounded-md px-2.5 py-1.5 hover:bg-slate-50 flex items-center gap-1 transition cursor-pointer"
-                        >
-                          <RotateCcw className={`w-3.5 h-3.5 ${isReRecording ? 'animate-spin' : ''}`} />
-                          <span>{isReRecording ? 'Recording...' : 'Re-record'}</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setHasVoiceNote(false)}
-                          className="text-slate-400 hover:text-red-500 p-1.5 transition rounded cursor-pointer"
-                          title="Delete voice note"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-white border border-dashed border-slate-300 rounded-xl p-3 text-center">
-                      <button
-                        type="button"
-                        onClick={handleReRecord}
-                        className="text-xs font-bold text-[#C8481A] hover:underline inline-flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Mic className="w-4 h-4" />
-                        <span>Click to record audio voice note</span>
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2.5">
-                    <span className="flex items-center gap-1">
-                      <Mic className="w-3 h-3 text-slate-400" />
-                      <span>Tap &amp; hold or click to speak in any language (हिंदी, ಕನ್ನಡ, etc.)</span>
-                    </span>
-                    <span className="text-slate-400 font-medium">Max limit: 60 sec</span>
-                  </div>
-                </div>
+                <VoiceRecorder
+                  onVoiceRecorded={(audioFile) => {
+                    setVoiceAudio(audioFile);
+                    setHasVoiceNote(true);
+                  }}
+                  onVoiceDeleted={() => {
+                    setVoiceAudio(null);
+                    setHasVoiceNote(false);
+                  }}
+                />
 
                 {/* Upload Photos & Videos Section */}
-                <div>
+                <div className='mt-6'>
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <label className="text-xs font-semibold text-slate-700">
                       Upload Photos / Videos of Work (काम की फोटो)
@@ -884,11 +847,10 @@ export default function AddNewWork() {
                     {/* Urgent */}
                     <div
                       onClick={() => setUrgency('urgent')}
-                      className={`p-3 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between ${
-                        urgency === 'urgent'
+                      className={`p-3 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between ${urgency === 'urgent'
                           ? 'border-2 border-[#C8481A] bg-[#FFF8F5]'
                           : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
+                        }`}
                     >
                       <div>
                         <span className="bg-[#DC2626] text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide inline-block mb-1.5">
@@ -906,11 +868,10 @@ export default function AddNewWork() {
                     {/* Today (Selected) */}
                     <div
                       onClick={() => setUrgency('today')}
-                      className={`p-3 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between ${
-                        urgency === 'today'
+                      className={`p-3 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between ${urgency === 'today'
                           ? 'border-2 border-[#C8481A] bg-[#FFF8F5]'
                           : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
+                        }`}
                     >
                       <div>
                         <div className="flex items-center justify-between gap-1 mb-1.5">
@@ -933,11 +894,10 @@ export default function AddNewWork() {
                     {/* Tomorrow */}
                     <div
                       onClick={() => setUrgency('tomorrow')}
-                      className={`p-3 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between ${
-                        urgency === 'tomorrow'
+                      className={`p-3 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between ${urgency === 'tomorrow'
                           ? 'border-2 border-[#C8481A] bg-[#FFF8F5]'
                           : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
+                        }`}
                     >
                       <div className="pt-4 sm:pt-4.5">
                         <p className="font-bold text-xs sm:text-sm text-slate-800">
@@ -956,11 +916,10 @@ export default function AddNewWork() {
                         const dateInput = document.getElementById('custom-date-picker');
                         if (dateInput) dateInput.focus();
                       }}
-                      className={`p-3 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between ${
-                        urgency === 'custom'
+                      className={`p-3 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between ${urgency === 'custom'
                           ? 'border-2 border-[#C8481A] bg-[#FFF8F5]'
                           : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
+                        }`}
                     >
                       <div>
                         <Calendar className="w-4 h-4 text-slate-400 mb-1" />
@@ -998,11 +957,10 @@ export default function AddNewWork() {
                     <button
                       type="button"
                       onClick={() => setTimeSlot('morning')}
-                      className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
-                        timeSlot === 'morning'
+                      className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${timeSlot === 'morning'
                           ? 'border-2 border-[#C8481A] bg-[#FFF8F5] text-[#9A3412]'
                           : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                      }`}
+                        }`}
                     >
                       <svg className="w-4 h-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
@@ -1015,11 +973,10 @@ export default function AddNewWork() {
                     <button
                       type="button"
                       onClick={() => setTimeSlot('afternoon')}
-                      className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
-                        timeSlot === 'afternoon'
+                      className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${timeSlot === 'afternoon'
                           ? 'border-2 border-[#C8481A] bg-[#FFF8F5] text-[#9A3412]'
                           : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                      }`}
+                        }`}
                     >
                       <svg className="w-4 h-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="5" />
@@ -1032,11 +989,10 @@ export default function AddNewWork() {
                     <button
                       type="button"
                       onClick={() => setTimeSlot('evening')}
-                      className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
-                        timeSlot === 'evening'
+                      className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${timeSlot === 'evening'
                           ? 'border-2 border-[#C8481A] bg-[#FFF8F5] text-[#9A3412]'
                           : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                      }`}
+                        }`}
                     >
                       <svg className="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
@@ -1066,11 +1022,10 @@ export default function AddNewWork() {
                   {/* Option 1: Standard Visit & Quote */}
                   <div
                     onClick={() => setPricingType('quote')}
-                    className={`p-4 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between ${
-                      pricingType === 'quote'
+                    className={`p-4 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between ${pricingType === 'quote'
                         ? 'border-2 border-[#C8481A] bg-[#FFF9F6]'
                         : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
+                      }`}
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2">
@@ -1078,11 +1033,10 @@ export default function AddNewWork() {
                           Standard Visit &amp; Quote
                         </span>
                         <span
-                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                            pricingType === 'quote'
+                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${pricingType === 'quote'
                               ? 'border-[#C8481A]'
                               : 'border-slate-300'
-                          }`}
+                            }`}
                         >
                           {pricingType === 'quote' && (
                             <span className="w-2 h-2 rounded-full bg-[#C8481A]"></span>
@@ -1106,11 +1060,10 @@ export default function AddNewWork() {
                   {/* Option 2: Fixed Budget */}
                   <div
                     onClick={() => setPricingType('fixed')}
-                    className={`p-4 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between ${
-                      pricingType === 'fixed'
+                    className={`p-4 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between ${pricingType === 'fixed'
                         ? 'border-2 border-[#C8481A] bg-[#FFF9F6]'
                         : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
+                      }`}
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2">
@@ -1118,11 +1071,10 @@ export default function AddNewWork() {
                           I have a Fixed Budget
                         </span>
                         <span
-                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                            pricingType === 'fixed'
+                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${pricingType === 'fixed'
                               ? 'border-[#C8481A]'
                               : 'border-slate-300'
-                          }`}
+                            }`}
                         >
                           {pricingType === 'fixed' && (
                             <span className="w-2 h-2 rounded-full bg-[#C8481A]"></span>
@@ -1226,18 +1178,16 @@ export default function AddNewWork() {
                     {/* Direct Phone & WhatsApp */}
                     <div
                       onClick={() => setContactMode('direct')}
-                      className={`p-3.5 rounded-xl border text-left cursor-pointer transition flex items-start gap-3 ${
-                        contactMode === 'direct'
+                      className={`p-3.5 rounded-xl border text-left cursor-pointer transition flex items-start gap-3 ${contactMode === 'direct'
                           ? 'border border-[#C8481A]/50 bg-[#FFF9F6]'
                           : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
+                        }`}
                     >
                       <span
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
-                          contactMode === 'direct'
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${contactMode === 'direct'
                             ? 'border-[#C8481A]'
                             : 'border-slate-300'
-                        }`}
+                          }`}
                       >
                         {contactMode === 'direct' && (
                           <span className="w-2 h-2 rounded-full bg-[#C8481A]"></span>
@@ -1256,18 +1206,16 @@ export default function AddNewWork() {
                     {/* WhatsApp Only */}
                     <div
                       onClick={() => setContactMode('whatsapp_only')}
-                      className={`p-3.5 rounded-xl border text-left cursor-pointer transition flex items-start gap-3 ${
-                        contactMode === 'whatsapp_only'
+                      className={`p-3.5 rounded-xl border text-left cursor-pointer transition flex items-start gap-3 ${contactMode === 'whatsapp_only'
                           ? 'border border-[#C8481A]/50 bg-[#FFF9F6]'
                           : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
+                        }`}
                     >
                       <span
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
-                          contactMode === 'whatsapp_only'
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${contactMode === 'whatsapp_only'
                             ? 'border-[#C8481A]'
                             : 'border-slate-300'
-                        }`}
+                          }`}
                       >
                         {contactMode === 'whatsapp_only' && (
                           <span className="w-2 h-2 rounded-full bg-[#C8481A]"></span>
@@ -1308,6 +1256,7 @@ export default function AddNewWork() {
               </button>
 
             </div>
+
 
             {/* ========================================================= */}
             {/* RIGHT / SIDEBAR COLUMN (4 COLS) */}

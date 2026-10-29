@@ -209,7 +209,6 @@ export default function RegisterWorker({ onLocationUpdate }) {
                     accessToken: res.data.token
                 })
             );
-            alert("Karigar Registration Successful!");
             navigate("/");
         } catch (registrationError) {
             console.error("Registration error:", registrationError.response?.data || registrationError.message);

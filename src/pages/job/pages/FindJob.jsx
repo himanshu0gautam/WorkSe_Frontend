@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Search,
   CalendarDays,
@@ -232,14 +232,48 @@ const SearchAndFilters = () => {
   );
 };
 
-const VoiceNotePlayer = ({ duration, transcript }) => {
+const VoiceNotePlayer = ({ audioUrl, duration = 'Voice note', transcript }) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioDuration, setAudioDuration] = useState(duration);
+  const audioRef = useRef(null);
+
+  const togglePlayback = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    try {
+      if (audio.paused) {
+        await audio.play();
+      } else {
+        audio.pause();
+      }
+    } catch (error) {
+      console.error('Voice note playback failed:', error);
+    }
+  };
+
+  const formatDuration = (seconds) => {
+    if (!Number.isFinite(seconds)) return duration;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="bg-amber-50/80 border border-amber-200/70 rounded-xl p-3 my-3.5 flex items-center gap-3">
+      <audio
+        ref={audioRef}
+        src={audioUrl}
+        preload="metadata"
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onEnded={() => setIsPlaying(false)}
+        onLoadedMetadata={(event) => setAudioDuration(formatDuration(event.currentTarget.duration))}
+      />
       {/* Play/Pause Circle Button */}
       <button
-        onClick={() => setIsPlaying(!isPlaying)}
+        type="button"
+        onClick={togglePlayback}
         className="w-8 h-8 rounded-full bg-[#C98A1E] hover:bg-[#B37817] text-white flex items-center justify-center flex-shrink-0 shadow-xs transition-transform active:scale-90"
         aria-label={isPlaying ? 'Pause audio' : 'Play audio'}
       >
@@ -257,7 +291,8 @@ const VoiceNotePlayer = ({ duration, transcript }) => {
           <span>Customer Voice Note (ग्राहक की आवाज सुनें)</span>
         </div>
         <p className="text-[11px] sm:text-xs text-amber-800/90 font-medium truncate mt-0.5">
-          <span className="font-bold mr-1">{duration}</span> • "{transcript}..."
+          <span className="font-bold mr-1">{audioDuration}</span>
+          {transcript ? ` • "${transcript}..."` : ''}
         </p>
       </div>
 
@@ -370,10 +405,12 @@ const JobCard = ({ job }) => {
       </div>
 
       {/* Audio Voice Note Bar */}
-      <VoiceNotePlayer
-        duration={job.voiceNoteDuration}
-        transcript={job.otherSpecficTask}
-      />
+      {job.voiceNote?.audioUrl && (
+        <VoiceNotePlayer
+          audioUrl={job.voiceNote.audioUrl}
+          transcript={job.otherSpecficTask || job.workDescription}
+        />
+      )}
 
       {/* Bottom Action Buttons (3 Column Layout) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
@@ -409,6 +446,7 @@ export default function FindJob() {
     const fetchJobs = async () => {
       try {
         const data = await jobService.getAllJobs({ limit: 10 })
+        console.log(data.jobs);       
         setJobs(data.jobs)
         settotalJob(data.jobs.length)
       } catch (error) {

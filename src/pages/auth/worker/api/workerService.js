@@ -9,5 +9,4 @@ export const workerService = {
         })
         return response.data
     },
-
 }
